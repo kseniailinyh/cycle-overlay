@@ -6,8 +6,6 @@ permissions:
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - "docs/calendar.ics"
     paths:
       - config.json
       - scripts/**
