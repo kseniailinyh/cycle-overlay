@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-01-16T21:18:23Z",
+  "today": "2026-01-16",
+  "last_period_start": "2025-12-26",
+  "previous_period_start": null,
+  "history": [
+    "2025-12-26"
+  ],
+  "cycle_day": 22,
+  "phase": "Luteal",
+  "phase_short": "Lut",
+  "phase_emoji": "🌙",
+  "last_cycle_length_days": null,
+  "avg_cycle_length_days": 28,
+  "predicted_next_start": "2026-01-23",
+  "predicted_ovulation_day": "2026-01-09",
+  "note": "Predictions are approximate (±2–3 days)."
+}

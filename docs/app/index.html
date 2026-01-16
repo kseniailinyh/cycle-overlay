@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cycle Overlay Status</title>
+    <title>Cycle Dashboard</title>
     <style>
       :root {
         color-scheme: light;
@@ -31,71 +31,51 @@
         border-radius: 18px;
         box-shadow: 0 14px 30px rgba(43, 36, 24, 0.12);
         padding: 28px;
-        max-width: 520px;
+        max-width: 580px;
         width: 100%;
       }
       h1 {
-        margin: 0 0 12px;
-        font-size: 28px;
+        margin: 0 0 10px;
+        font-size: 30px;
         letter-spacing: 0.5px;
       }
-      .meta {
+      .headline {
+        font-size: 22px;
+        font-weight: 600;
+        margin: 8px 0 18px;
+      }
+      .muted {
         color: var(--muted);
         font-size: 14px;
-        margin-bottom: 20px;
       }
       dl {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px 18px;
-        margin: 0 0 20px;
+        margin: 18px 0 18px;
       }
       dt {
         color: var(--muted);
-        font-size: 13px;
+        font-size: 12px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
       }
       dd {
         margin: 0;
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 600;
       }
-      .actions {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
+      a {
+        color: var(--accent);
+        text-decoration: none;
       }
-      button {
-        border: 1px solid var(--border);
-        background: var(--ink);
-        color: #fff;
+      .error {
+        background: #fff1ef;
+        border: 1px solid #f2c8c3;
+        padding: 12px 14px;
         border-radius: 12px;
-        padding: 10px 16px;
-        font-size: 15px;
-        cursor: pointer;
-        transition: transform 0.1s ease, box-shadow 0.1s ease;
-      }
-      button.secondary {
-        background: transparent;
-        color: var(--ink);
-      }
-      button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-      button:active {
-        transform: translateY(1px);
-      }
-      .message {
+        color: #8a2b23;
         margin-top: 16px;
-        font-size: 14px;
-      }
-      .message.success {
-        color: #2f7a3f;
-      }
-      .message.error {
-        color: #b0322b;
       }
       @media (max-width: 520px) {
         dl {
@@ -106,91 +86,81 @@
   </head>
   <body>
     <div class="card">
-      <h1>Cycle Overlay</h1>
-      <div class="meta">Live status from your worker</div>
+      <h1>Cycle Dashboard</h1>
+      <div id="headline" class="headline">Loading…</div>
+      <div class="muted">To mark Day 1, use the iPhone Shortcut.</div>
 
-      <dl>
+      <dl id="details" hidden>
         <dt>Today</dt>
         <dd id="today">—</dd>
         <dt>Last Period Start</dt>
         <dd id="lastStart">—</dd>
-        <dt>Cycle Day</dt>
-        <dd id="cycleDay">—</dd>
-        <dt>Phase</dt>
-        <dd id="phase">—</dd>
+        <dt>Previous Period Start</dt>
+        <dd id="previousStart">—</dd>
+        <dt>Last Cycle Length</dt>
+        <dd id="lastLength">—</dd>
+        <dt>Predicted Next Start</dt>
+        <dd id="nextStart">—</dd>
+        <dt>Predicted Ovulation Day</dt>
+        <dd id="ovulationDay">—</dd>
+        <dt>Generated At</dt>
+        <dd id="generatedAt">—</dd>
+        <dt>Note</dt>
+        <dd id="note">—</dd>
       </dl>
 
-      <div class="actions">
-        <button id="startBtn">🩸 Day 1 today</button>
-        <button id="undoBtn" class="secondary">↩️ Undo</button>
+      <div class="muted">
+        <a href="../calendar.ics">Open calendar.ics</a>
       </div>
 
-      <div id="message" class="message"></div>
+      <div id="error" class="error" hidden></div>
     </div>
 
     <script>
-      const WORKER_BASE_URL = "https://cycle-overlay-api.ksenia-ilinyh.workers.dev";
-      const API_KEY = "untangle-chose-156-needy-thieves";
+      const headline = document.getElementById("headline");
+      const details = document.getElementById("details");
+      const errorEl = document.getElementById("error");
 
-      const todayEl = document.getElementById("today");
-      const lastStartEl = document.getElementById("lastStart");
-      const cycleDayEl = document.getElementById("cycleDay");
-      const phaseEl = document.getElementById("phase");
-      const messageEl = document.getElementById("message");
-      const startBtn = document.getElementById("startBtn");
-      const undoBtn = document.getElementById("undoBtn");
+      const fields = {
+        today: document.getElementById("today"),
+        last_period_start: document.getElementById("lastStart"),
+        previous_period_start: document.getElementById("previousStart"),
+        last_cycle_length_days: document.getElementById("lastLength"),
+        predicted_next_start: document.getElementById("nextStart"),
+        predicted_ovulation_day: document.getElementById("ovulationDay"),
+        generated_at: document.getElementById("generatedAt"),
+        note: document.getElementById("note"),
+      };
 
-      function setMessage(text, type) {
-        messageEl.textContent = text;
-        messageEl.className = `message ${type || ""}`.trim();
+      function setError(message) {
+        errorEl.textContent = message;
+        errorEl.hidden = false;
+        details.hidden = true;
       }
 
-      function formatDate(date) {
-        return date.toISOString().slice(0, 10);
-      }
-
-      async function fetchStatus() {
-        setMessage("", "");
-        try {
-          const response = await fetch(`${WORKER_BASE_URL}/status?key=${API_KEY}`);
+      fetch("./status.json")
+        .then((response) => {
           if (!response.ok) {
-            throw new Error(`Status request failed (${response.status})`);
+            throw new Error(`Status load failed (${response.status})`);
           }
-          const data = await response.json();
-          todayEl.textContent = formatDate(new Date());
-          lastStartEl.textContent = data.last_period_start || "—";
-          cycleDayEl.textContent = data.current_day || "—";
-          phaseEl.textContent = data.current_phase || "—";
-        } catch (error) {
-          setMessage(error.message, "error");
-        }
-      }
-
-      async function postAction(path, successMessage) {
-        setMessage("", "");
-        startBtn.disabled = true;
-        undoBtn.disabled = true;
-        try {
-          const response = await fetch(`${WORKER_BASE_URL}/${path}?key=${API_KEY}`, {
-            method: "POST",
-          });
-          if (!response.ok) {
-            throw new Error(`Request failed (${response.status})`);
-          }
-          setMessage(successMessage, "success");
-          await fetchStatus();
-        } catch (error) {
-          setMessage(error.message, "error");
-        } finally {
-          startBtn.disabled = false;
-          undoBtn.disabled = false;
-        }
-      }
-
-      startBtn.addEventListener("click", () => postAction("start", "Marked Day 1."));
-      undoBtn.addEventListener("click", () => postAction("undo", "Undo complete."));
-
-      fetchStatus();
+          return response.json();
+        })
+        .then((data) => {
+          const cycleDay = data.cycle_day ?? "—";
+          headline.textContent = `CD ${cycleDay} — ${data.phase_emoji} ${data.phase_short}`;
+          fields.today.textContent = data.today || "—";
+          fields.last_period_start.textContent = data.last_period_start || "—";
+          fields.previous_period_start.textContent = data.previous_period_start || "—";
+          fields.last_cycle_length_days.textContent = data.last_cycle_length_days ?? "—";
+          fields.predicted_next_start.textContent = data.predicted_next_start || "—";
+          fields.predicted_ovulation_day.textContent = data.predicted_ovulation_day || "—";
+          fields.generated_at.textContent = data.generated_at || "—";
+          fields.note.textContent = data.note || "—";
+          details.hidden = false;
+        })
+        .catch((error) => {
+          setError(error.message || "Unable to load status data.");
+        });
     </script>
   </body>
 </html>

@@ -6,23 +6,30 @@ from pathlib import Path
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.json"
 DATA_PATH = Path(__file__).resolve().parent.parent / "data.json"
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "docs" / "calendar.ics"
+STATUS_PATH = Path(__file__).resolve().parent.parent / "docs" / "app" / "status.json"
 
 
 def load_config(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
-def load_last_period_start() -> date:
+def load_cycle_data() -> tuple[date, list[str]]:
     if DATA_PATH.exists():
         try:
             data = load_config(DATA_PATH)
             value = data.get("last_period_start")
+            history = data.get("history", [])
             if isinstance(value, str) and value.strip():
-                return parse_date(value)
+                history_list = []
+                if isinstance(history, list):
+                    for item in history:
+                        if isinstance(item, str) and item.strip():
+                            history_list.append(item)
+                return parse_date(value), history_list
         except (json.JSONDecodeError, ValueError, OSError):
             pass
     config = load_config(CONFIG_PATH)
-    return parse_date(config["last_period_start"])
+    return parse_date(config["last_period_start"]), []
 
 
 def parse_date(value: str) -> date:
@@ -73,10 +80,83 @@ def build_ics(calendar_name: str, start_date: date, days: int, cycle_length: int
     lines.append("END:VCALENDAR")
     return "\r\n".join(lines) + "\r\n"
 
+def compute_status(
+    today: date,
+    last_period_start: date,
+    history: list[str],
+    cycle_length: int,
+    period_length: int,
+) -> dict:
+    previous_period_start = history[-2] if len(history) >= 2 else None
+    history_dates = []
+    for item in history:
+        try:
+            history_dates.append(parse_date(item))
+        except ValueError:
+            continue
+
+    last_cycle_length_days = None
+    if previous_period_start:
+        try:
+            last_cycle_length_days = (last_period_start - parse_date(previous_period_start)).days
+        except ValueError:
+            last_cycle_length_days = None
+
+    avg_cycle_length_days = cycle_length
+    if len(history_dates) >= 3:
+        diffs = []
+        for index in range(1, len(history_dates)):
+            diff = (history_dates[index] - history_dates[index - 1]).days
+            if diff > 0:
+                diffs.append(diff)
+        if diffs:
+            avg_cycle_length_days = int(round(sum(diffs) / len(diffs)))
+
+    delta_days = (today - last_period_start).days
+    cycle_day = delta_days + 1 if delta_days >= 0 else 0
+    ovulation_day = avg_cycle_length_days - 14
+
+    if 1 <= cycle_day <= period_length:
+        phase_short = "Men"
+        phase = "Menstruation"
+        phase_emoji = "🩸"
+    elif cycle_day == ovulation_day:
+        phase_short = "Ovu"
+        phase = "Ovulation"
+        phase_emoji = "⭐"
+    elif cycle_day > ovulation_day and cycle_day > 0:
+        phase_short = "Lut"
+        phase = "Luteal"
+        phase_emoji = "🌙"
+    else:
+        phase_short = "Fol"
+        phase = "Follicular"
+        phase_emoji = "🌿"
+
+    predicted_next_start = last_period_start + timedelta(days=avg_cycle_length_days)
+    predicted_ovulation_day = predicted_next_start - timedelta(days=14)
+
+    return {
+        "generated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "today": today.isoformat(),
+        "last_period_start": last_period_start.isoformat(),
+        "previous_period_start": previous_period_start,
+        "history": history,
+        "cycle_day": cycle_day,
+        "phase": phase,
+        "phase_short": phase_short,
+        "phase_emoji": phase_emoji,
+        "last_cycle_length_days": last_cycle_length_days,
+        "avg_cycle_length_days": avg_cycle_length_days,
+        "predicted_next_start": predicted_next_start.isoformat(),
+        "predicted_ovulation_day": predicted_ovulation_day.isoformat(),
+        "note": "Predictions are approximate (±2–3 days).",
+    }
+
 
 def main() -> None:
     config = load_config(CONFIG_PATH)
-    last_period_start = load_last_period_start()
+    last_period_start, history = load_cycle_data()
     cycle_length = int(config.get("cycle_length", 28))
     period_length = int(config.get("period_length", 3))
     months_ahead = int(config.get("months_ahead", 12))
@@ -88,6 +168,17 @@ def main() -> None:
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT_PATH.open("w", encoding="utf-8", newline="\n") as f:
         f.write(ics_text)
+    status = compute_status(
+        today=datetime.utcnow().date(),
+        last_period_start=last_period_start,
+        history=history,
+        cycle_length=cycle_length,
+        period_length=period_length,
+    )
+    STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with STATUS_PATH.open("w", encoding="utf-8", newline="\n") as f:
+        json.dump(status, f, ensure_ascii=False, indent=2)
+        f.write("\n")
 
 
 if __name__ == "__main__":
