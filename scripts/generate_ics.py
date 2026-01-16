@@ -4,12 +4,25 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.json"
+DATA_PATH = Path(__file__).resolve().parent.parent / "data.json"
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "docs" / "calendar.ics"
 
 
 def load_config(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
+
+def load_last_period_start() -> date:
+    if DATA_PATH.exists():
+        try:
+            data = load_config(DATA_PATH)
+            value = data.get("last_period_start")
+            if isinstance(value, str) and value.strip():
+                return parse_date(value)
+        except (json.JSONDecodeError, ValueError, OSError):
+            pass
+    config = load_config(CONFIG_PATH)
+    return parse_date(config["last_period_start"])
 
 
 def parse_date(value: str) -> date:
@@ -63,7 +76,7 @@ def build_ics(calendar_name: str, start_date: date, days: int, cycle_length: int
 
 def main() -> None:
     config = load_config(CONFIG_PATH)
-    last_period_start = parse_date(config["last_period_start"])
+    last_period_start = load_last_period_start()
     cycle_length = int(config.get("cycle_length", 28))
     period_length = int(config.get("period_length", 3))
     months_ahead = int(config.get("months_ahead", 12))
