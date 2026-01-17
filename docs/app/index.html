@@ -138,7 +138,7 @@
         details.hidden = true;
       }
 
-      fetch("./status.json")
+      fetch("./data.json")
         .then((response) => {
           if (!response.ok) {
             throw new Error(`Status load failed (${response.status})`);
@@ -149,12 +149,12 @@
           const cycleDay = data.cycle_day ?? "—";
           headline.textContent = `CD ${cycleDay} — ${data.phase_emoji} ${data.phase_short}`;
           fields.today.textContent = data.today || "—";
-          fields.last_period_start.textContent = data.last_period_start || "—";
+          fields.last_period_start.textContent = data.last_period_start || data.cycleStart || "—";
           fields.previous_period_start.textContent = data.previous_period_start || "—";
           fields.last_cycle_length_days.textContent = data.last_cycle_length_days ?? "—";
           fields.predicted_next_start.textContent = data.predicted_next_start || "—";
           fields.predicted_ovulation_day.textContent = data.predicted_ovulation_day || "—";
-          fields.generated_at.textContent = data.generated_at || "—";
+          fields.generated_at.textContent = data.generated_at || data.generatedAt || "—";
           fields.note.textContent = data.note || "—";
           details.hidden = false;
         })

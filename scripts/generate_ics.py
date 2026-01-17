@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 import json
+import os
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.json"
 DATA_PATH = Path(__file__).resolve().parent.parent / "data.json"
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "docs" / "calendar.ics"
-STATUS_PATH = Path(__file__).resolve().parent.parent / "docs" / "app" / "status.json"
+APP_DATA_PATH = Path(__file__).resolve().parent.parent / "docs" / "app" / "data.json"
 
 
 def load_config(path: Path) -> dict:
@@ -86,6 +87,7 @@ def compute_status(
     history: list[str],
     cycle_length: int,
     period_length: int,
+    source: str,
 ) -> dict:
     previous_period_start = history[-2] if len(history) >= 2 else None
     history_dates = []
@@ -136,8 +138,12 @@ def compute_status(
     predicted_next_start = last_period_start + timedelta(days=avg_cycle_length_days)
     predicted_ovulation_day = predicted_next_start - timedelta(days=14)
 
+    generated_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     return {
-        "generated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "cycleStart": last_period_start.isoformat(),
+        "generatedAt": generated_at,
+        "source": source,
+        "generated_at": generated_at,
         "today": today.isoformat(),
         "last_period_start": last_period_start.isoformat(),
         "previous_period_start": previous_period_start,
@@ -168,15 +174,17 @@ def main() -> None:
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT_PATH.open("w", encoding="utf-8", newline="\n") as f:
         f.write(ics_text)
+    source = os.environ.get("STATUS_SOURCE", "schedule")
     status = compute_status(
         today=datetime.utcnow().date(),
         last_period_start=last_period_start,
         history=history,
         cycle_length=cycle_length,
         period_length=period_length,
+        source=source,
     )
-    STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with STATUS_PATH.open("w", encoding="utf-8", newline="\n") as f:
+    APP_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with APP_DATA_PATH.open("w", encoding="utf-8", newline="\n") as f:
         json.dump(status, f, ensure_ascii=False, indent=2)
         f.write("\n")
 

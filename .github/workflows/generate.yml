@@ -14,6 +14,11 @@ on:
   schedule:
     - cron: "0 5 * * *"
   workflow_dispatch:
+    inputs:
+      cycle_start:
+        description: "Cycle start date (YYYY-MM-DD)"
+        required: true
+        type: string
 
 jobs:
   build:
@@ -29,7 +34,44 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Update cycle start
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          CYCLE_START: ${{ inputs.cycle_start }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from datetime import datetime
+          from pathlib import Path
+
+          cycle_start = os.environ.get("CYCLE_START", "").strip()
+          if not cycle_start:
+            raise SystemExit("cycle_start input is required")
+          datetime.strptime(cycle_start, "%Y-%m-%d")
+
+          path = Path("data.json")
+          data = {}
+          if path.exists():
+            try:
+              data = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+              data = {}
+
+          history = data.get("history", [])
+          if not isinstance(history, list):
+            history = []
+          if not history or history[-1] != cycle_start:
+            history.append(cycle_start)
+
+          data["last_period_start"] = cycle_start
+          data["history"] = history
+          path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+          PY
+
       - name: Generate calendar
+        env:
+          STATUS_SOURCE: ${{ github.event_name == 'workflow_dispatch' && 'workflow_dispatch' || 'schedule' }}
         run: python3 scripts/generate_ics.py
 
       - name: Validate output
@@ -44,12 +86,16 @@ jobs:
 
       - name: Commit and push
         run: |
-          git add docs/calendar.ics docs/app/status.json
+          DATE_FOR_COMMIT="${{ inputs.cycle_start }}"
+          if [ -z "$DATE_FOR_COMMIT" ]; then
+            DATE_FOR_COMMIT=$(date -u +%Y-%m-%d)
+          fi
+          git add -A
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: update calendar.ics [skip ci]"
+          git commit -m "Update cycle data: ${DATE_FOR_COMMIT}"
           git push origin main
