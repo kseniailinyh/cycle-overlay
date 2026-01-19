@@ -4,138 +4,83 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Cycle Dashboard</title>
-    <style>
-      :root {
-        color-scheme: light;
-        font-family: "Iowan Old Style", "Palatino", "Palatino Linotype", "Book Antiqua", serif;
-        --bg: #f6f2ea;
-        --card: #fffaf2;
-        --ink: #2b2418;
-        --muted: #6c604f;
-        --accent: #c94a2b;
-        --border: #e5d9c5;
-      }
-      body {
-        margin: 0;
-        background: radial-gradient(circle at top, #fff7e9, #efe6d6 55%, #e6dbc7);
-        color: var(--ink);
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 32px 16px;
-      }
-      .card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        box-shadow: 0 14px 30px rgba(43, 36, 24, 0.12);
-        padding: 28px;
-        max-width: 580px;
-        width: 100%;
-      }
-      h1 {
-        margin: 0 0 10px;
-        font-size: 30px;
-        letter-spacing: 0.5px;
-      }
-      .headline {
-        font-size: 22px;
-        font-weight: 600;
-        margin: 8px 0 18px;
-      }
-      .muted {
-        color: var(--muted);
-        font-size: 14px;
-      }
-      dl {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px 18px;
-        margin: 18px 0 18px;
-      }
-      dt {
-        color: var(--muted);
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-      }
-      dd {
-        margin: 0;
-        font-size: 17px;
-        font-weight: 600;
-      }
-      a {
-        color: var(--accent);
-        text-decoration: none;
-      }
-      .error {
-        background: #fff1ef;
-        border: 1px solid #f2c8c3;
-        padding: 12px 14px;
-        border-radius: 12px;
-        color: #8a2b23;
-        margin-top: 16px;
-      }
-      @media (max-width: 520px) {
-        dl {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="./style.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Instrument+Serif&display=swap"
+    />
   </head>
   <body>
-    <div class="card">
-      <h1>Cycle Dashboard</h1>
-      <div id="headline" class="headline">Loading…</div>
-      <div class="muted">To mark Day 1, use the iPhone Shortcut.</div>
+    <main class="dashboard">
+      <header class="top">
+        <span>Cycle</span>
+        <span>Overlay</span>
+      </header>
 
-      <dl id="details" hidden>
-        <dt>Today</dt>
-        <dd id="today">—</dd>
-        <dt>Last Period Start</dt>
-        <dd id="lastStart">—</dd>
-        <dt>Previous Period Start</dt>
-        <dd id="previousStart">—</dd>
-        <dt>Last Cycle Length</dt>
-        <dd id="lastLength">—</dd>
-        <dt>Predicted Next Start</dt>
-        <dd id="nextStart">—</dd>
-        <dt>Predicted Ovulation Day</dt>
-        <dd id="ovulationDay">—</dd>
-        <dt>Generated At</dt>
-        <dd id="generatedAt">—</dd>
-        <dt>Note</dt>
-        <dd id="note">—</dd>
-      </dl>
+      <section class="center">
+        <div class="cycle-day">
+          <div class="cycle-number">1</div>
+          <div class="cycle-label">cycle day</div>
+        </div>
+        <div class="message">
+          <h1 class="title">Extra gentle</h1>
+          <p class="description">
+            Consider a slower rhythm today. Gentle movement, warm tea, and a softer
+            pace make a big difference.
+          </p>
+        </div>
+      </section>
 
-      <div class="muted">
-        <a href="../calendar.ics">Open calendar.ics</a>
-      </div>
-
-      <div id="error" class="error" hidden></div>
-    </div>
+      <footer class="bottom">
+        <div>
+          <p class="date-label">Prev</p>
+          <p id="prevDate">—</p>
+        </div>
+        <div>
+          <p class="date-label">Next</p>
+          <p id="nextDate">—</p>
+        </div>
+      </footer>
+    </main>
 
     <script>
-      const headline = document.getElementById("headline");
-      const details = document.getElementById("details");
+      const prevDateEl = document.getElementById("prevDate");
+      const nextDateEl = document.getElementById("nextDate");
       const errorEl = document.getElementById("error");
-
-      const fields = {
-        today: document.getElementById("today"),
-        last_period_start: document.getElementById("lastStart"),
-        previous_period_start: document.getElementById("previousStart"),
-        last_cycle_length_days: document.getElementById("lastLength"),
-        predicted_next_start: document.getElementById("nextStart"),
-        predicted_ovulation_day: document.getElementById("ovulationDay"),
-        generated_at: document.getElementById("generatedAt"),
-        note: document.getElementById("note"),
-      };
 
       function setError(message) {
         errorEl.textContent = message;
         errorEl.hidden = false;
-        details.hidden = true;
+      }
+
+      function formatDate(value) {
+        if (!value) return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "—";
+        return date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+        });
+      }
+
+      function isStale(generatedAt) {
+        if (!generatedAt) return false;
+        const generated = new Date(generatedAt);
+        if (Number.isNaN(generated.getTime())) return false;
+        return Date.now() - generated.getTime() > 2 * 60 * 1000;
+      }
+
+      function render(data) {
+        prevDateEl.textContent = formatDate(data.previous_period_start);
+        const nextValue = data.predicted_next_start;
+        if (isStale(data.generatedAt)) {
+          nextDateEl.textContent = "··· Updating";
+          nextDateEl.classList.add("updating");
+        } else {
+          nextDateEl.textContent = formatDate(nextValue);
+          nextDateEl.classList.remove("updating");
+        }
       }
 
       fetch("./data.json")
@@ -145,19 +90,7 @@
           }
           return response.json();
         })
-        .then((data) => {
-          const cycleDay = data.cycle_day ?? "—";
-          headline.textContent = `CD ${cycleDay} — ${data.phase_emoji} ${data.phase_short}`;
-          fields.today.textContent = data.today || "—";
-          fields.last_period_start.textContent = data.last_period_start || data.cycleStart || "—";
-          fields.previous_period_start.textContent = data.previous_period_start || "—";
-          fields.last_cycle_length_days.textContent = data.last_cycle_length_days ?? "—";
-          fields.predicted_next_start.textContent = data.predicted_next_start || "—";
-          fields.predicted_ovulation_day.textContent = data.predicted_ovulation_day || "—";
-          fields.generated_at.textContent = data.generated_at || data.generatedAt || "—";
-          fields.note.textContent = data.note || "—";
-          details.hidden = false;
-        })
+        .then(render)
         .catch((error) => {
           setError(error.message || "Unable to load status data.");
         });
