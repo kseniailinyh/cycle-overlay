@@ -11,8 +11,6 @@ on:
       - config.json
       - scripts/**
       - .github/workflows/generate.yml
-  schedule:
-    - cron: "0 5 * * *"
   workflow_dispatch:
     inputs:
       cycle_start:
