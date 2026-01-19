@@ -161,6 +161,16 @@
         .catch((error) => {
           setError(error.message || "Unable to load status data.");
         });
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("reload") === "1") {
+        params.delete("reload");
+        params.delete("t");
+        const nextUrl = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
+        setTimeout(() => {
+          window.location.replace(nextUrl);
+        }, 15000);
+      }
     </script>
   </body>
 </html>
