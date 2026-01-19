@@ -96,4 +96,4 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Update cycle data: ${DATE_FOR_COMMIT}"
-          git push origin main
+          git push origin "HEAD:${{ github.ref_name }}"
