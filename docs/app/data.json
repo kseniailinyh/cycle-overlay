@@ -1,15 +1,15 @@
 {
   "cycleStart": "2025-12-26",
-  "generatedAt": "2026-01-18T05:15:20Z",
+  "generatedAt": "2026-01-19T05:23:06Z",
   "source": "schedule",
-  "generated_at": "2026-01-18T05:15:20Z",
-  "today": "2026-01-18",
+  "generated_at": "2026-01-19T05:23:06Z",
+  "today": "2026-01-19",
   "last_period_start": "2025-12-26",
   "previous_period_start": null,
   "history": [
     "2025-12-26"
   ],
-  "cycle_day": 24,
+  "cycle_day": 25,
   "phase": "Luteal",
   "phase_short": "Lut",
   "phase_emoji": "🌙",
