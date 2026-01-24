@@ -14,6 +14,14 @@
     <main class="dashboard">
       <header class="top">
         <span>Cycle</span>
+        <div id="status" class="status" aria-live="polite">
+          <div class="sk-three-bounce">
+            <div class="sk-bounce"></div>
+            <div class="sk-bounce"></div>
+            <div class="sk-bounce"></div>
+          </div>
+          <span class="status-text" hidden>✔ Updated</span>
+        </div>
         <span>Overlay</span>
       </header>
 
@@ -134,9 +142,11 @@
         if (isStale(data.generatedAt)) {
           nextDateEl.textContent = "··· Updating";
           nextDateEl.classList.add("updating");
+          setStatus("pending");
         } else {
           nextDateEl.textContent = formatDate(nextDate.toISOString().slice(0, 10));
           nextDateEl.classList.remove("updating");
+          setStatus("updated");
         }
       }
 
