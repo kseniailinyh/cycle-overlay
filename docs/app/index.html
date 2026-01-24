@@ -14,6 +14,14 @@
     <main class="dashboard">
       <header class="top">
         <span>Cycle</span>
+        <div id="status" class="status" aria-live="polite">
+          <div class="sk-three-bounce">
+            <div class="sk-bounce"></div>
+            <div class="sk-bounce"></div>
+            <div class="sk-bounce"></div>
+          </div>
+          <span class="status-text" hidden>✔ Updated</span>
+        </div>
         <span>Overlay</span>
       </header>
 
@@ -46,11 +54,18 @@
     <script>
       const prevDateEl = document.getElementById("prevDate");
       const nextDateEl = document.getElementById("nextDate");
-      const errorEl = document.getElementById("error");
+      const statusEl = document.getElementById("status");
+      const statusTextEl = statusEl.querySelector(".status-text");
+      const spinnerEl = statusEl.querySelector(".sk-three-bounce");
 
-      function setError(message) {
-        errorEl.textContent = message;
-        errorEl.hidden = false;
+      function setStatus(state) {
+        if (state === "updated") {
+          spinnerEl.hidden = true;
+          statusTextEl.hidden = false;
+        } else {
+          spinnerEl.hidden = false;
+          statusTextEl.hidden = true;
+        }
       }
 
       function formatDate(value) {
@@ -77,9 +92,11 @@
         if (isStale(data.generatedAt)) {
           nextDateEl.textContent = "··· Updating";
           nextDateEl.classList.add("updating");
+          setStatus("pending");
         } else {
           nextDateEl.textContent = formatDate(nextValue);
           nextDateEl.classList.remove("updating");
+          setStatus("updated");
         }
       }
 
@@ -92,7 +109,7 @@
         })
         .then(render)
         .catch((error) => {
-          setError(error.message || "Unable to load status data.");
+          console.error(error);
         });
 
       const params = new URLSearchParams(window.location.search);
