@@ -17,9 +17,18 @@
         <span>Overlay</span>
       </header>
 
+      <div id="status" class="status" hidden>
+        <div class="sk-three-bounce">
+          <div class="sk-bounce"></div>
+          <div class="sk-bounce"></div>
+          <div class="sk-bounce"></div>
+        </div>
+        <span id="statusText" class="status-text"></span>
+      </div>
+
       <section class="center">
         <div class="cycle-day">
-          <div class="cycle-number">1</div>
+          <div class="cycle-number" id="cycleNumber">1</div>
           <div class="cycle-label">cycle day</div>
         </div>
         <div class="message">
@@ -46,22 +55,52 @@
     <script>
       const prevDateEl = document.getElementById("prevDate");
       const nextDateEl = document.getElementById("nextDate");
-      const errorEl = document.getElementById("error");
+      const cycleNumberEl = document.getElementById("cycleNumber");
+      const statusEl = document.getElementById("status");
+      const statusTextEl = document.getElementById("statusText");
 
-      function setError(message) {
-        errorEl.textContent = message;
-        errorEl.hidden = false;
+      function setStatus(mode, text) {
+        if (!mode) {
+          statusEl.hidden = true;
+          statusTextEl.textContent = "";
+          statusTextEl.hidden = true;
+          statusEl.querySelector(".sk-three-bounce").hidden = true;
+          return;
+        }
+        statusEl.hidden = false;
+        const spinner = statusEl.querySelector(".sk-three-bounce");
+        if (mode === "pending") {
+          spinner.hidden = false;
+          statusTextEl.hidden = true;
+        } else {
+          spinner.hidden = true;
+          statusTextEl.hidden = false;
+          statusTextEl.textContent = text || "";
+        }
+      }
+
+      function parseLocalISODate(value) {
+        const match = /^\\d{4}-\\d{2}-\\d{2}$/.test(value);
+        if (!match) return null;
+        const [year, month, day] = value.split("-").map(Number);
+        const date = new Date(year, month - 1, day, 12, 0, 0);
+        return Number.isNaN(date.getTime()) ? null : date;
       }
 
       function formatDate(value) {
         if (!value) return "—";
-        const date = new Date(value);
+        const date = parseLocalISODate(value) || new Date(value);
         if (Number.isNaN(date.getTime())) return "—";
         return date.toLocaleDateString("en-US", {
           month: "short",
           day: "2-digit",
           year: "numeric",
         });
+      }
+
+      function daysBetween(start, end) {
+        const ms = end.getTime() - start.getTime();
+        return Math.floor(ms / (24 * 60 * 60 * 1000));
       }
 
       function isStale(generatedAt) {
@@ -71,16 +110,63 @@
         return Date.now() - generated.getTime() > 2 * 60 * 1000;
       }
 
-      function render(data) {
-        prevDateEl.textContent = formatDate(data.previous_period_start);
-        const nextValue = data.predicted_next_start;
+      function render(data, startDateValue, cycleLengthValue) {
+        const startDate = parseLocalISODate(startDateValue);
+        if (!startDate) return;
+        const today = new Date();
+        const todayLocal = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+          12,
+          0,
+          0
+        );
+        const cycleDay = Math.max(0, daysBetween(startDate, todayLocal) + 1);
+        cycleNumberEl.textContent = String(cycleDay);
+
+        const prevDate = new Date(startDate);
+        prevDate.setDate(prevDate.getDate() - cycleLengthValue);
+        const nextDate = new Date(startDate);
+        nextDate.setDate(nextDate.getDate() + cycleLengthValue);
+        prevDateEl.textContent = formatDate(prevDate.toISOString().slice(0, 10));
+
         if (isStale(data.generatedAt)) {
           nextDateEl.textContent = "··· Updating";
           nextDateEl.classList.add("updating");
         } else {
-          nextDateEl.textContent = formatDate(nextValue);
+          nextDateEl.textContent = formatDate(nextDate.toISOString().slice(0, 10));
           nextDateEl.classList.remove("updating");
         }
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const startParam = params.get("start");
+      const hasStartParam = !!startParam;
+      const pendingStart = localStorage.getItem("pendingStart");
+      let effectiveStart = pendingStart;
+      let inPendingMode = false;
+
+      if (startParam && parseLocalISODate(startParam)) {
+        localStorage.setItem("pendingStart", startParam);
+        effectiveStart = startParam;
+        inPendingMode = true;
+        params.delete("start");
+        const nextUrl = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
+        history.replaceState({}, "", nextUrl);
+      } else if (pendingStart && parseLocalISODate(pendingStart)) {
+        inPendingMode = true;
+      }
+
+      if (inPendingMode) {
+        setStatus("pending");
+      } else {
+        setStatus(null);
+      }
+
+      const defaultCycleLength = 28;
+      if (effectiveStart && inPendingMode) {
+        render({ generatedAt: null }, effectiveStart, defaultCycleLength);
       }
 
       fetch("./data.json")
@@ -90,16 +176,46 @@
           }
           return response.json();
         })
-        .then(render)
+        .then((data) => {
+          const dataStart =
+            data.lastPeriodStart || data.last_period_start || data.cycleStart;
+          const cycleLength =
+            typeof data.cycleLength === "number" ? data.cycleLength : defaultCycleLength;
+          const dataStartDate = parseLocalISODate(dataStart);
+
+          if (inPendingMode && effectiveStart) {
+            const pendingDate = parseLocalISODate(effectiveStart);
+            if (dataStartDate && pendingDate) {
+              const isComplete = dataStartDate.getTime() >= pendingDate.getTime();
+              if (isComplete) {
+                setStatus("complete", "✔️ Updated");
+                localStorage.removeItem("pendingStart");
+                inPendingMode = false;
+                effectiveStart = dataStart;
+              } else {
+                setStatus("pending");
+                effectiveStart = effectiveStart;
+              }
+            }
+          }
+
+          const startToUse = effectiveStart || dataStart;
+          if (startToUse) {
+            render(data, startToUse, cycleLength);
+          }
+        })
         .catch((error) => {
-          setError(error.message || "Unable to load status data.");
+          setStatus(null);
+          console.error(error);
         });
 
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("reload") === "1") {
-        params.delete("reload");
-        params.delete("t");
-        const nextUrl = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
+      const reloadParams = new URLSearchParams(window.location.search);
+      if (reloadParams.get("reload") === "1") {
+        reloadParams.delete("reload");
+        reloadParams.delete("t");
+        const nextUrl = `${window.location.pathname}${
+          reloadParams.toString() ? `?${reloadParams}` : ""
+        }`;
         setTimeout(() => {
           window.location.replace(nextUrl);
         }, 15000);
