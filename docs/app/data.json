@@ -1,21 +1,22 @@
 {
-  "cycleStart": "2025-12-26",
-  "generatedAt": "2026-01-19T20:58:17Z",
-  "source": "schedule",
-  "generated_at": "2026-01-19T20:58:17Z",
-  "today": "2026-01-19",
-  "last_period_start": "2025-12-26",
-  "previous_period_start": null,
+  "cycleStart": "2026-01-25",
+  "generatedAt": "2026-01-25T13:08:59Z",
+  "source": "workflow_dispatch",
+  "generated_at": "2026-01-25T13:08:59Z",
+  "today": "2026-01-25",
+  "last_period_start": "2026-01-25",
+  "previous_period_start": "2025-12-26",
   "history": [
-    "2025-12-26"
+    "2025-12-26",
+    "2026-01-25"
   ],
-  "cycle_day": 25,
-  "phase": "Luteal",
-  "phase_short": "Lut",
-  "phase_emoji": "🌙",
-  "last_cycle_length_days": null,
+  "cycle_day": 1,
+  "phase": "Menstruation",
+  "phase_short": "Men",
+  "phase_emoji": "🩸",
+  "last_cycle_length_days": 30,
   "avg_cycle_length_days": 28,
-  "predicted_next_start": "2026-01-23",
-  "predicted_ovulation_day": "2026-01-09",
+  "predicted_next_start": "2026-02-22",
+  "predicted_ovulation_day": "2026-02-08",
   "note": "Predictions are approximate (±2–3 days)."
 }
