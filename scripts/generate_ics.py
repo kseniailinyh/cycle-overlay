@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+from bisect import bisect_right
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -48,7 +49,23 @@ def phase_for_day(day_in_cycle: int, cycle_length: int, period_length: int) -> t
     return "Fol", "🌿"
 
 
-def build_ics(calendar_name: str, start_date: date, days: int, cycle_length: int, period_length: int) -> str:
+def cycle_start_for_date(current: date, starts: list[date]) -> date:
+    if not starts:
+        return current
+    index = bisect_right(starts, current) - 1
+    if index < 0:
+        return starts[0]
+    return starts[index]
+
+
+def build_ics(
+    calendar_name: str,
+    start_date: date,
+    end_date: date,
+    cycle_starts: list[date],
+    cycle_length: int,
+    period_length: int,
+) -> str:
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
@@ -57,9 +74,11 @@ def build_ics(calendar_name: str, start_date: date, days: int, cycle_length: int
         f"X-WR-CALNAME:{calendar_name}",
     ]
 
-    for offset in range(days):
+    total_days = (end_date - start_date).days + 1
+    for offset in range(total_days):
         current = start_date + timedelta(days=offset)
-        day_in_cycle = (offset % cycle_length) + 1
+        cycle_start = cycle_start_for_date(current, cycle_starts)
+        day_in_cycle = (current - cycle_start).days + 1
         phase, emoji = phase_for_day(day_in_cycle, cycle_length, period_length)
         summary = f"{day_in_cycle:02d} {emoji} {phase}"
 
@@ -168,15 +187,34 @@ def main() -> None:
     months_ahead = int(config.get("months_ahead", 12))
     calendar_name = str(config.get("calendar_name", "Cycle"))
 
-    days = 365 if months_ahead == 12 else int(round(months_ahead * 30.5))
-    ics_text = build_ics(calendar_name, last_period_start, days, cycle_length, period_length)
+    today = datetime.utcnow().date()
+    days_ahead = 365 if months_ahead == 12 else int(round(months_ahead * 30.5))
+    end_date = today + timedelta(days=days_ahead)
+
+    cycle_starts = [last_period_start]
+    for item in history:
+        try:
+            cycle_starts.append(parse_date(item))
+        except ValueError:
+            continue
+    cycle_starts = sorted(set(cycle_starts))
+    start_date = cycle_starts[0]
+
+    ics_text = build_ics(
+        calendar_name,
+        start_date,
+        end_date,
+        cycle_starts,
+        cycle_length,
+        period_length,
+    )
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT_PATH.open("w", encoding="utf-8", newline="\n") as f:
         f.write(ics_text)
     source = os.environ.get("STATUS_SOURCE", "schedule")
     status = compute_status(
-        today=datetime.utcnow().date(),
+        today=today,
         last_period_start=last_period_start,
         history=history,
         cycle_length=cycle_length,
