@@ -10,6 +10,8 @@ DATA_PATH = Path(__file__).resolve().parent.parent / "data.json"
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "docs" / "calendar.ics"
 APP_DATA_PATH = Path(__file__).resolve().parent.parent / "docs" / "app" / "data.json"
 
+HYPOTHETICAL_WINDOW_DAYS = 5
+
 
 def load_config(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
@@ -38,15 +40,27 @@ def parse_date(value: str) -> date:
     return datetime.strptime(value, "%Y-%m-%d").date()
 
 
-def phase_for_day(day_in_cycle: int, cycle_length: int, period_length: int) -> tuple[str, str]:
+def phase_for_day_short(day_in_cycle: int, cycle_length: int, period_length: int) -> tuple[str, str]:
     ovulation_day = cycle_length - 14
     if 1 <= day_in_cycle <= period_length:
         return "Men", "🩸"
     if day_in_cycle == ovulation_day:
-        return "Ovu", "⭐"
+        return "Ovl", "⭐"
     if day_in_cycle > ovulation_day:
         return "Lut", "🌙"
     return "Fol", "🌿"
+
+
+def format_summary(day_in_cycle: int, phase_short: str, emoji: str) -> str:
+    if phase_short == "Men":
+        if day_in_cycle <= 3:
+            return f"{day_in_cycle}{emoji}"
+        return f"{day_in_cycle} {emoji}"
+    return f"{day_in_cycle} {emoji} {phase_short}"
+
+
+def format_hypothetical(day_in_cycle: int, emoji: str) -> str:
+    return f"{day_in_cycle}{emoji}"
 
 
 def cycle_start_for_date(current: date, starts: list[date]) -> date:
@@ -63,6 +77,7 @@ def build_ics(
     start_date: date,
     end_date: date,
     cycle_starts: list[date],
+    last_known_start: date,
     cycle_length: int,
     period_length: int,
 ) -> str:
@@ -75,12 +90,19 @@ def build_ics(
     ]
 
     total_days = (end_date - start_date).days + 1
+    next_cycle_start = last_known_start + timedelta(days=cycle_length)
+    window_end = next_cycle_start + timedelta(days=HYPOTHETICAL_WINDOW_DAYS - 1)
     for offset in range(total_days):
         current = start_date + timedelta(days=offset)
-        cycle_start = cycle_start_for_date(current, cycle_starts)
-        day_in_cycle = (current - cycle_start).days + 1
-        phase, emoji = phase_for_day(day_in_cycle, cycle_length, period_length)
-        summary = f"{day_in_cycle:02d} {emoji} {phase}"
+        if next_cycle_start <= current <= window_end:
+            hypothetical_day = (current - next_cycle_start).days + 1
+            hypothetical_emoji = "🩸" if hypothetical_day <= period_length else "🌿"
+            summary = f"🌙 Lut ({format_hypothetical(hypothetical_day, hypothetical_emoji)})"
+        else:
+            cycle_start = cycle_start_for_date(current, cycle_starts)
+            day_in_cycle = (current - cycle_start).days + 1
+            phase_short, emoji = phase_for_day_short(day_in_cycle, cycle_length, period_length)
+            summary = format_summary(day_in_cycle, phase_short, emoji)
 
         dtstart = current.strftime("%Y%m%d")
         dtend = (current + timedelta(days=1)).strftime("%Y%m%d")
@@ -199,12 +221,18 @@ def main() -> None:
             continue
     cycle_starts = sorted(set(cycle_starts))
     start_date = cycle_starts[0]
+    last_known_start = cycle_starts[-1]
+    next_start = last_known_start + timedelta(days=cycle_length)
+    while next_start <= end_date:
+        cycle_starts.append(next_start)
+        next_start += timedelta(days=cycle_length)
 
     ics_text = build_ics(
         calendar_name,
         start_date,
         end_date,
         cycle_starts,
+        last_known_start,
         cycle_length,
         period_length,
     )
