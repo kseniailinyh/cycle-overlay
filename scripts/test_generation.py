@@ -61,9 +61,9 @@ def main() -> None:
 
     if events[day_28] != "28 🌙 Lut":
         raise SystemExit(f"Unexpected day 28 summary: {events[day_28]}")
-    if events[day_29] != "🌙 Lut (1🩸)":
+    if events[day_29] != "29 🌙 Lut (1🩸)":
         raise SystemExit(f"Unexpected day 29 summary: {events[day_29]}")
-    if events[day_33] != "🌙 Lut (5🌿)":
+    if events[day_33] != "33 🌙 Lut (5🌿)":
         raise SystemExit(f"Unexpected day 33 summary: {events[day_33]}")
     if events[day_34] != "6 🌿 Fol":
         raise SystemExit(f"Unexpected day 34 summary: {events[day_34]}")

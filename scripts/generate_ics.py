@@ -97,7 +97,11 @@ def build_ics(
         if next_cycle_start <= current <= window_end:
             hypothetical_day = (current - next_cycle_start).days + 1
             hypothetical_emoji = "🩸" if hypothetical_day <= period_length else "🌿"
-            summary = f"🌙 Lut ({format_hypothetical(hypothetical_day, hypothetical_emoji)})"
+            current_cycle_day = cycle_length + hypothetical_day
+            summary = (
+                f"{current_cycle_day} 🌙 Lut "
+                f"({format_hypothetical(hypothetical_day, hypothetical_emoji)})"
+            )
         else:
             cycle_start = cycle_start_for_date(current, cycle_starts)
             day_in_cycle = (current - cycle_start).days + 1
