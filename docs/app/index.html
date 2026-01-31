@@ -31,11 +31,8 @@
           <div class="cycle-label">cycle day</div>
         </div>
         <div class="message">
-          <h1 class="title">Extra gentle</h1>
-          <p class="description">
-            Consider a slower rhythm today. Gentle movement, warm tea, and a softer
-            pace make a big difference.
-          </p>
+          <h1 class="title" id="messageTitle" hidden></h1>
+          <p class="description" id="messageDescription" hidden></p>
         </div>
       </section>
 
@@ -57,6 +54,8 @@
       const cycleNumberEl = document.getElementById("cycleNumber");
       const statusEl = document.getElementById("status");
       const statusTextEl = statusEl.querySelector(".status-text");
+      const messageTitleEl = document.getElementById("messageTitle");
+      const messageDescriptionEl = document.getElementById("messageDescription");
 
       function setStatus(mode, text) {
         if (!mode) {
@@ -102,7 +101,7 @@
         return Math.floor(ms / (24 * 60 * 60 * 1000));
       }
 
-      function render(startDateValue, cycleLengthValue) {
+      function render(startDateValue, cycleLengthValue, phaseValue) {
         const startDate = parseLocalISODate(startDateValue);
         if (!startDate) return;
         const today = new Date();
@@ -116,6 +115,7 @@
         );
         const cycleDay = Math.max(0, daysBetween(startDate, todayLocal) + 1);
         cycleNumberEl.textContent = String(cycleDay);
+        updateCopy(cycleDay, phaseValue);
 
         const prevDate = new Date(startDate);
         prevDate.setDate(prevDate.getDate() - cycleLengthValue);
@@ -124,6 +124,60 @@
         prevDateEl.textContent = formatDate(prevDate.toISOString().slice(0, 10));
         nextDateEl.textContent = formatDate(nextDate.toISOString().slice(0, 10));
         nextDateEl.classList.remove("updating");
+      }
+
+      function getCycleCopy(cycleDay, phase) {
+        if (cycleDay === 1) {
+          return {
+            title: "Extra gentle",
+            description:
+              "Consider a slower rhythm today. Gentle movement, warm tea, and a softer pace make a big difference.",
+          };
+        }
+        if (cycleDay === 2) {
+          return {
+            title: "Feeling lighter",
+            description:
+              "The heaviness starts to fade. You might feel more like yourself again — still soft, but noticeably easier.",
+          };
+        }
+        if (cycleDay === 3) {
+          return {
+            title: "Energy is coming back",
+            description:
+              "Momentum is quietly building. Your body feels stronger, clearer, and more ready to move forward.",
+          };
+        }
+        if (cycleDay >= 4 && cycleDay <= 14 && phase === "follicular") {
+          return {
+            title: "Go mode",
+            description:
+              'This is your "let’s do it" phase. Energy, focus, and confidence are rising — a great time to start, explore, and take action.',
+          };
+        }
+        if (cycleDay >= 15 && phase === "luteal") {
+          return {
+            title: "Slow down",
+            description:
+              "Energy gradually turns inward. Lower the pace, simplify plans, and give yourself a bit more care and space.",
+          };
+        }
+        return null;
+      }
+
+      function updateCopy(cycleDay, phase) {
+        const copy = getCycleCopy(cycleDay, phase);
+        if (!copy) {
+          messageTitleEl.hidden = true;
+          messageDescriptionEl.hidden = true;
+          messageTitleEl.textContent = "";
+          messageDescriptionEl.textContent = "";
+          return;
+        }
+        messageTitleEl.hidden = false;
+        messageDescriptionEl.hidden = false;
+        messageTitleEl.textContent = copy.title;
+        messageDescriptionEl.textContent = copy.description;
       }
 
       const params = new URLSearchParams(window.location.search);
@@ -149,7 +203,7 @@
 
       const defaultCycleLength = 28;
       if (effectiveStart && inPendingMode) {
-        render(effectiveStart, defaultCycleLength);
+        render(effectiveStart, defaultCycleLength, "");
       }
 
       fetch("./data.json")
@@ -165,6 +219,7 @@
           const cycleLength =
             typeof data.cycleLength === "number" ? data.cycleLength : defaultCycleLength;
           const dataStartDate = parseLocalISODate(dataStart);
+          const phaseValue = typeof data.phase === "string" ? data.phase.toLowerCase() : "";
 
           if (inPendingMode && effectiveStart) {
             const pendingDate = parseLocalISODate(effectiveStart);
@@ -184,12 +239,16 @@
 
           const startToUse = effectiveStart || dataStart;
           if (startToUse) {
-            render(startToUse, cycleLength);
+            render(startToUse, cycleLength, phaseValue);
           }
         })
         .catch((error) => {
           setStatus(null);
           console.error(error);
+          const cycleDayValue = Number(cycleNumberEl.textContent);
+          if (!Number.isNaN(cycleDayValue)) {
+            updateCopy(cycleDayValue, "");
+          }
         });
 
       const reloadParams = new URLSearchParams(window.location.search);
