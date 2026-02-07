@@ -118,7 +118,6 @@
         updateCopy(cycleDay, phaseValue);
 
         const prevDate = new Date(startDate);
-        prevDate.setDate(prevDate.getDate() - cycleLengthValue);
         const nextDate = new Date(startDate);
         nextDate.setDate(nextDate.getDate() + cycleLengthValue);
         prevDateEl.textContent = formatDate(prevDate.toISOString().slice(0, 10));
@@ -131,14 +130,14 @@
           return {
             title: "Extra gentle",
             description:
-              "Consider a slower rhythm today. Gentle movement, warm tea, and a softer pace make a big difference.",
+              "Slower rhythm today. Gentle movement, warm tea, and a softer pace make a big difference.",
           };
         }
         if (cycleDay === 2) {
           return {
             title: "Feeling lighter",
             description:
-              "The heaviness starts to fade. You might feel more like yourself again — still soft, but noticeably easier.",
+              "The heaviness starts to fade. You might feel more like yourself again – still soft, but noticeably easier.",
           };
         }
         if (cycleDay === 3) {
@@ -152,7 +151,7 @@
           return {
             title: "Go mode",
             description:
-              'This is your "let’s do it" phase. Energy, focus, and confidence are rising — a great time to start, explore, and take action.',
+              '"Let’s do it!" phase. Energy, focus, and confidence are rising – a great time to start, explore, and take action.',
           };
         }
         if (cycleDay >= 15 && phase === "luteal") {
@@ -182,17 +181,33 @@
 
       const params = new URLSearchParams(window.location.search);
       const startParam = params.get("start");
-      const hasStartParam = !!startParam;
+      const updatingParam = params.get("updating") === "1";
+      if (!updatingParam) {
+        localStorage.removeItem("cycleOverlayUpdating");
+        localStorage.removeItem("pendingStart");
+      }
+
       const pendingStart = localStorage.getItem("pendingStart");
       let effectiveStart = pendingStart;
       let inPendingMode = false;
 
-      if (startParam && parseLocalISODate(startParam)) {
+      if (updatingParam) {
+        localStorage.setItem("cycleOverlayUpdating", "1");
+      }
+
+      const hasPendingStart = pendingStart && parseLocalISODate(pendingStart);
+      const isUpdating = updatingParam;
+
+      if (isUpdating && startParam && parseLocalISODate(startParam)) {
         localStorage.setItem("pendingStart", startParam);
         effectiveStart = startParam;
         inPendingMode = true;
-      } else if (pendingStart && parseLocalISODate(pendingStart)) {
+      } else if (isUpdating && hasPendingStart) {
         inPendingMode = true;
+      } else if (!isUpdating) {
+        localStorage.removeItem("pendingStart");
+        localStorage.removeItem("cycleOverlayUpdating");
+        effectiveStart = null;
       }
 
       if (inPendingMode) {
@@ -228,6 +243,7 @@
               if (isComplete) {
                 setStatus("complete", "✔️ Updated");
                 localStorage.removeItem("pendingStart");
+                localStorage.removeItem("cycleOverlayUpdating");
                 inPendingMode = false;
                 effectiveStart = dataStart;
               } else {
