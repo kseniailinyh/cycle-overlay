@@ -101,6 +101,22 @@
         return Math.floor(ms / (24 * 60 * 60 * 1000));
       }
 
+      function normalizePhase(phase, phaseShort) {
+        const raw =
+          typeof phase === "string"
+            ? phase
+            : typeof phaseShort === "string"
+              ? phaseShort
+              : "";
+        const value = raw.toLowerCase().trim();
+        if (!value) return "";
+        if (value.startsWith("lut")) return "luteal";
+        if (value.startsWith("fol")) return "follicular";
+        if (value.startsWith("men")) return "menstrual";
+        if (value.startsWith("ovu")) return "ovulation";
+        return value;
+      }
+
       function render(startDateValue, cycleLengthValue, phaseValue) {
         const startDate = parseLocalISODate(startDateValue);
         if (!startDate) return;
@@ -147,14 +163,14 @@
               "Momentum is quietly building. Your body feels stronger, clearer, and more ready to move forward.",
           };
         }
-        if (cycleDay >= 4 && cycleDay <= 14 && phase === "follicular") {
+        if (cycleDay >= 4 && cycleDay <= 14 && (!phase || phase === "follicular")) {
           return {
             title: "Go mode",
             description:
               '"Let’s do it!" phase. Energy, focus, and confidence are rising – a great time to start, explore, and take action.',
           };
         }
-        if (cycleDay >= 15 && phase === "luteal") {
+        if (cycleDay >= 15) {
           return {
             title: "Slow down",
             description:
@@ -234,7 +250,7 @@
           const cycleLength =
             typeof data.cycleLength === "number" ? data.cycleLength : defaultCycleLength;
           const dataStartDate = parseLocalISODate(dataStart);
-          const phaseValue = typeof data.phase === "string" ? data.phase.toLowerCase() : "";
+          const phaseValue = normalizePhase(data.phase, data.phase_short);
 
           if (inPendingMode && effectiveStart) {
             const pendingDate = parseLocalISODate(effectiveStart);
