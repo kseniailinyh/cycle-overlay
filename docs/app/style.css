@@ -111,6 +111,23 @@ body {
   gap: clamp(12px, 1vw, 20px);
 }
 
+.start-cycle {
+  border: 1px solid var(--text-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  font-size: var(--text-size);
+  font-weight: 500;
+  padding: 12px 24px;
+  justify-self: center;
+}
+
+.start-cycle:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .cycle-day {
   display: inline-grid;
   gap: 6px;
