@@ -50,6 +50,7 @@
         <button class="start-cycle" id="startCycleButton" type="button" hidden>
           Start new cycle
         </button>
+        <p class="start-cycle-hint" id="startCycleHint" hidden></p>
       </section>
 
       <footer class="bottom">
@@ -73,6 +74,7 @@
       const messageTitleEl = document.getElementById("messageTitle");
       const messageDescriptionEl = document.getElementById("messageDescription");
       const startCycleButtonEl = document.getElementById("startCycleButton");
+      const startCycleHintEl = document.getElementById("startCycleHint");
 
       function setStatus(mode, text) {
         if (!mode) {
@@ -123,6 +125,38 @@
         const month = `${date.getMonth() + 1}`.padStart(2, "0");
         const day = `${date.getDate()}`.padStart(2, "0");
         return `${year}-${month}-${day}`;
+      }
+
+      function inferGitHubContext() {
+        const host = window.location.hostname.toLowerCase();
+        const pathname = window.location.pathname;
+        const pathParts = pathname.split("/").filter(Boolean);
+        if (!host.endsWith(".github.io") || pathParts.length < 1) {
+          return null;
+        }
+        const owner = host.replace(".github.io", "");
+        const repo = pathParts[0];
+        if (!owner || !repo) return null;
+        return { owner, repo };
+      }
+
+      function showLocalOnlyHint(dateIso) {
+        const github = inferGitHubContext();
+        const message =
+          "Saved on this device only. To update calendar subscription, update data.json in the repo and regenerate calendar.";
+        setStatus("complete", message);
+        if (!github) {
+          startCycleHintEl.textContent = message;
+          startCycleHintEl.hidden = false;
+          return;
+        }
+        const editUrl = `https://github.com/${github.owner}/${github.repo}/edit/main/data.json`;
+        const workflowUrl = `https://github.com/${github.owner}/${github.repo}/actions/workflows/generate.yml`;
+        startCycleHintEl.innerHTML =
+          `Saved on this device only (${dateIso}). ` +
+          `<a href="${editUrl}" target="_blank" rel="noopener noreferrer">Edit data.json</a> ` +
+          `and run <a href="${workflowUrl}" target="_blank" rel="noopener noreferrer">Generate Calendar workflow</a>.`;
+        startCycleHintEl.hidden = false;
       }
 
       function updateStartButton(cycleDay) {
@@ -278,8 +312,10 @@
           return;
         }
         const todayIso = toLocalISODate(new Date());
+        console.info("[cycle-overlay] local override set", { todayIso });
         localStorage.setItem("localStartOverride", todayIso);
         render(todayIso, currentCycleLength, currentPhase);
+        showLocalOnlyHint(todayIso);
       });
 
       if (effectiveStart && inPendingMode) {
@@ -330,6 +366,9 @@
               : dataStart);
           if (startToUse) {
             render(startToUse, cycleLength, phaseValue);
+          }
+          if (overrideStartDate) {
+            showLocalOnlyHint(overrideStart);
           }
         })
         .catch((error) => {

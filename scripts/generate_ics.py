@@ -17,23 +17,23 @@ def load_config(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
-def load_cycle_data() -> tuple[date, list[str]]:
-    if DATA_PATH.exists():
-        try:
-            data = load_config(DATA_PATH)
-            value = data.get("last_period_start")
-            history = data.get("history", [])
-            if isinstance(value, str) and value.strip():
-                history_list = []
-                if isinstance(history, list):
-                    for item in history:
-                        if isinstance(item, str) and item.strip():
-                            history_list.append(item)
-                return parse_date(value), history_list
-        except (json.JSONDecodeError, ValueError, OSError):
-            pass
-    config = load_config(CONFIG_PATH)
-    return parse_date(config["last_period_start"]), []
+def load_cycle_data(path: Path) -> tuple[date, list[str]]:
+    if not path.exists():
+        raise FileNotFoundError(f"Missing source-of-truth file: {path}")
+
+    data = load_config(path)
+    value = data.get("last_period_start")
+    history = data.get("history", [])
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("data.json must define last_period_start as YYYY-MM-DD")
+
+    history_list = []
+    if isinstance(history, list):
+        for item in history:
+            if isinstance(item, str) and item.strip():
+                history_list.append(item)
+
+    return parse_date(value), history_list
 
 
 def parse_date(value: str) -> date:
@@ -207,7 +207,7 @@ def compute_status(
 
 def main() -> None:
     config = load_config(CONFIG_PATH)
-    last_period_start, history = load_cycle_data()
+    last_period_start, history = load_cycle_data(DATA_PATH)
     cycle_length = int(config.get("cycle_length", 28))
     period_length = int(config.get("period_length", 3))
     months_ahead = int(config.get("months_ahead", 12))

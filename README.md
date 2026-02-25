@@ -4,15 +4,19 @@ This repository generates an iCalendar (.ics) file with daily all-day events tha
 
 ## How it works
 
-- Update `config.json` with your most recent cycle start date.
+- Update `data.json` with your most recent cycle start date.
 - A GitHub Actions workflow regenerates `docs/calendar.ics` on push and daily.
 - GitHub Pages serves the calendar file for Apple Calendar subscription.
 
 ## Configure
 
-Edit `config.json`:
+Edit `data.json`:
 
 - `last_period_start`: ISO date string `YYYY-MM-DD`
+- `history`: array of prior start dates (ISO strings)
+
+Edit `config.json`:
+
 - `cycle_length`: integer (default 28)
 - `period_length`: integer (default 3)
 - `months_ahead`: integer (default 12)
