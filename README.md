@@ -1,56 +1,64 @@
 # Cycle Overlay Calendar
 
-This repository generates an iCalendar (.ics) file with daily all-day events that show cycle day and phase for the next 12 months. The calendar is served via GitHub Pages from the `docs/` folder.
+This repository generates per-user iCalendar (`.ics`) files and per-user dashboard status JSON files.
 
-## How it works
+## Data model
 
-- Update `data.json` with your most recent cycle start date.
-- A GitHub Actions workflow regenerates `docs/calendar.ics` on push and daily.
-- GitHub Pages serves the calendar file for Apple Calendar subscription.
+- Source of truth per user: `data/users/<token>.json`
+- User registry: `docs/data/users.csv` (`token`, `startDate`, `cycleLength`, links)
+- Generated calendar per user: `docs/cal/<token>.ics`
+- Generated app status per user: `docs/data/users/<token>.json`
+
+Backward-compatible files are still generated:
+
+- `docs/calendar.ics`
+- `docs/app/data.json`
 
 ## Configure
 
-Edit `data.json`:
+1. Add/update user row in `docs/data/users.csv`.
+2. Ensure `data/users/<token>.json` exists for that token.
 
-- `last_period_start`: ISO date string `YYYY-MM-DD`
-- `history`: array of prior start dates (ISO strings)
+User source file format:
 
-Edit `config.json`:
-
-- `cycle_length`: integer (default 28)
-- `period_length`: integer (default 3)
-- `months_ahead`: integer (default 12)
-- `calendar_name`: string (default `Cycle`)
-
-Commit and push the change to `main`.
-
-## GitHub Pages setup
-
-This repo uses GitHub Pages from the `/docs` folder on the `main` branch.
-
-1. Go to **Settings → Pages**.
-2. Under **Build and deployment**, set **Source** to **Deploy from a branch**.
-3. Select **Branch: main** and **Folder: /docs**.
-4. Save.
-
-After Pages is enabled, your subscription URL will be:
-
-```
-https://<your-username>.github.io/<your-repo>/calendar.ics
+```json
+{
+  "last_period_start": "2026-02-03",
+  "history": ["2026-02-03"],
+  "cycle_length": 28
+}
 ```
 
-## Subscribe in Apple Calendar
+Global defaults are in `config.json`:
 
-1. Open Apple Calendar.
-2. **File → New Calendar Subscription…**
-3. Paste the URL above.
+- `cycle_length`
+- `period_length`
+- `months_ahead`
+- `calendar_name`
 
-Apple may take hours to refresh subscribed calendars. To force a refresh, remove and re-add the subscription.
+## Dashboard URL
 
-## Local generation (optional)
+Open dashboard with token:
 
+```text
+https://<username>.github.io/<repo>/app/?t=<token>
 ```
+
+Optional explicit API override:
+
+```text
+https://<username>.github.io/<repo>/app/?t=<token>&api=https://<worker-domain>
+```
+
+## Local generation
+
+```bash
 python3 scripts/generate_ics.py
 ```
 
-The output is written to `docs/calendar.ics`.
+## GitHub Actions
+
+Workflow `.github/workflows/generate.yml` regenerates all users on:
+
+- push affecting `data/**`, `docs/data/users.csv`, generation code
+- manual `workflow_dispatch` with `token` + `cycle_start`

@@ -18,21 +18,22 @@ X-GitHub-Api-Version: 2022-11-28
 Authorization: Bearer <YOUR_PAT>
 ```
 
-Example JSON body:
+Example JSON body (multi-user):
 
 ```json
 {
   "ref": "main",
-  "inputs": { "cycle_start": "2026-01-17" }
+  "inputs": {
+    "token": "d3d0cd6b5f7e9372a731b29b1394c293713957c167cf1f07",
+    "cycle_start": "2026-01-17"
+  }
 }
 ```
 
-## Open the dashboard
-
-After triggering the workflow, open:
+## Open dashboard
 
 ```
-https://<username>.github.io/<repo>/app/
+https://<username>.github.io/<repo>/app/?t=<token>
 ```
 
 If data appears stale, wait a minute for GitHub Pages to update.

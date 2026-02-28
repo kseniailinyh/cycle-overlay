@@ -7,12 +7,17 @@ on:
   push:
     branches: [main]
     paths:
-      - data.json
+      - data/**
+      - docs/data/users.csv
       - config.json
       - scripts/**
       - .github/workflows/generate.yml
   workflow_dispatch:
     inputs:
+      token:
+        description: "User token from docs/data/users.csv"
+        required: true
+        type: string
       cycle_start:
         description: "Cycle start date (YYYY-MM-DD)"
         required: true
@@ -36,6 +41,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         env:
           CYCLE_START: ${{ inputs.cycle_start }}
+          USER_TOKEN: ${{ inputs.token }}
         run: |
           python3 - <<'PY'
           import json
@@ -44,11 +50,14 @@ jobs:
           from pathlib import Path
 
           cycle_start = os.environ.get("CYCLE_START", "").strip()
+          token = os.environ.get("USER_TOKEN", "").strip()
           if not cycle_start:
             raise SystemExit("cycle_start input is required")
+          if not token:
+            raise SystemExit("token input is required")
           datetime.strptime(cycle_start, "%Y-%m-%d")
 
-          path = Path("data.json")
+          path = Path("data/users") / f"{token}.json"
           data = {}
           if path.exists():
             try:
@@ -64,10 +73,11 @@ jobs:
 
           data["last_period_start"] = cycle_start
           data["history"] = history
-          path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PY
 
-      - name: Generate calendar
+      - name: Generate calendars
         env:
           STATUS_SOURCE: ${{ github.event_name == 'workflow_dispatch' && 'workflow_dispatch' || 'schedule' }}
         run: python3 scripts/generate_ics.py
@@ -75,8 +85,16 @@ jobs:
       - name: Validate output
         run: |
           test -f docs/calendar.ics
-          grep -q "BEGIN:VCALENDAR" docs/calendar.ics
-          count=$(grep -c "BEGIN:VEVENT" docs/calendar.ics)
+          test -d docs/cal
+          test -d docs/data/users
+          first_cal=$(find docs/cal -name '*.ics' | head -n 1)
+          first_status=$(find docs/data/users -name '*.json' | head -n 1)
+          if [ -z "$first_cal" ] || [ -z "$first_status" ]; then
+            echo "Expected generated files for users"
+            exit 1
+          fi
+          grep -q "BEGIN:VCALENDAR" "$first_cal"
+          count=$(grep -c "BEGIN:VEVENT" "$first_cal")
           if [ "$count" -lt 300 ]; then
             echo "Expected at least 300 events, got $count"
             exit 1

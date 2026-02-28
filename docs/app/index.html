@@ -75,6 +75,20 @@
       const messageDescriptionEl = document.getElementById("messageDescription");
       const startCycleButtonEl = document.getElementById("startCycleButton");
       const startCycleHintEl = document.getElementById("startCycleHint");
+      const params = new URLSearchParams(window.location.search);
+      const tokenParam = (params.get("t") || "").trim();
+      const apiBaseParam = (params.get("api") || "").trim();
+      const defaultApiBase = "https://cycle-overlay-api.ksenia-ilinyh.workers.dev";
+      const apiBase = (apiBaseParam || defaultApiBase).replace(/\/+$/, "");
+      const pendingStartKey = "pendingStart";
+      const updatingKey = "cycleOverlayUpdating";
+      const pollIntervalMs = 5000;
+      const pollTimeoutMs = 180000;
+      const defaultCycleLength = 28;
+      let currentCycleLength = defaultCycleLength;
+      let currentPhase = "";
+      let pendingStart = localStorage.getItem(pendingStartKey);
+      let inPendingMode = Boolean(pendingStart && parseLocalISODate(pendingStart));
 
       function setStatus(mode, text) {
         if (!mode) {
@@ -236,48 +250,116 @@
         messageDescriptionEl.textContent = copy.description;
       }
 
-      const params = new URLSearchParams(window.location.search);
-      const startParam = params.get("start");
-      const updatingParam = params.get("updating") === "1";
-      if (!updatingParam) {
-        localStorage.removeItem("cycleOverlayUpdating");
-        localStorage.removeItem("pendingStart");
+      function extractDataStart(data) {
+        return data.lastPeriodStart || data.last_period_start || data.cycleStart || "";
       }
 
-      const pendingStart = localStorage.getItem("pendingStart");
-      let effectiveStart = pendingStart;
-      let inPendingMode = false;
-
-      if (updatingParam) {
-        localStorage.setItem("cycleOverlayUpdating", "1");
+      function clearPendingState() {
+        localStorage.removeItem(pendingStartKey);
+        localStorage.removeItem(updatingKey);
+        pendingStart = null;
+        inPendingMode = false;
       }
 
-      const hasPendingStart = pendingStart && parseLocalISODate(pendingStart);
-      const isUpdating = updatingParam;
-
-      if (isUpdating && startParam && parseLocalISODate(startParam)) {
-        localStorage.setItem("pendingStart", startParam);
-        effectiveStart = startParam;
+      function setPendingState(startIso) {
+        localStorage.setItem(updatingKey, "1");
+        localStorage.setItem(pendingStartKey, startIso);
+        pendingStart = startIso;
         inPendingMode = true;
-      } else if (isUpdating && hasPendingStart) {
-        inPendingMode = true;
-      } else if (!isUpdating) {
-        localStorage.removeItem("pendingStart");
-        localStorage.removeItem("cycleOverlayUpdating");
-        effectiveStart = null;
       }
 
-      if (inPendingMode) {
-        setStatus("pending");
-      } else {
-        setStatus(null);
+      async function fetchStatusData(cacheBust = false) {
+        const dataPath = tokenParam
+          ? `../data/users/${encodeURIComponent(tokenParam)}.json`
+          : "./data.json";
+        const requestUrl = new URL(dataPath, window.location.href);
+        if (cacheBust) {
+          requestUrl.searchParams.set("ts", Date.now().toString());
+        }
+        const response = await fetch(requestUrl.toString(), { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`Status load failed (${response.status})`);
+        }
+        return response.json();
       }
 
-      const defaultCycleLength = 28;
-      let currentCycleLength = defaultCycleLength;
-      let currentPhase = "";
+      function sleep(ms) {
+        return new Promise((resolve) => {
+          setTimeout(resolve, ms);
+        });
+      }
 
-      startCycleButtonEl.addEventListener("click", () => {
+      async function waitForPublishedStart(targetStartIso) {
+        const targetDate = parseLocalISODate(targetStartIso);
+        if (!targetDate) {
+          throw new Error("Invalid target start date");
+        }
+
+        const deadline = Date.now() + pollTimeoutMs;
+        while (Date.now() < deadline) {
+          const data = await fetchStatusData(true);
+          const dataStart = extractDataStart(data);
+          const dataStartDate = parseLocalISODate(dataStart);
+          if (dataStartDate && dataStartDate.getTime() >= targetDate.getTime()) {
+            return data;
+          }
+          await sleep(pollIntervalMs);
+        }
+        throw new Error("Timed out while waiting for calendar publish");
+      }
+
+      async function callStartCycle(dateIso) {
+        if (!apiBase) {
+          throw new Error("Missing worker endpoint. Add ?api=https://<worker-domain>");
+        }
+        if (!tokenParam) {
+          throw new Error("Missing token. Add ?t=<token> to the dashboard URL.");
+        }
+        const requestUrl = new URL(`${apiBase}/start`);
+        requestUrl.searchParams.set("date", dateIso);
+        requestUrl.searchParams.set("t", tokenParam);
+        const response = await fetch(requestUrl.toString(), {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`Start request failed (${response.status}): ${text}`);
+        }
+        return response.json();
+      }
+
+      async function loadAndRender(cacheBust = false) {
+        const data = await fetchStatusData(cacheBust);
+        const dataStart = extractDataStart(data);
+        const dataStartDate = parseLocalISODate(dataStart);
+        const cycleLength =
+          typeof data.cycleLength === "number" ? data.cycleLength : defaultCycleLength;
+        const phaseValue = normalizePhase(data.phase, data.phase_short);
+        currentCycleLength = cycleLength;
+        currentPhase = phaseValue;
+
+        if (inPendingMode && pendingStart) {
+          const pendingDate = parseLocalISODate(pendingStart);
+          if (pendingDate && dataStartDate && dataStartDate.getTime() >= pendingDate.getTime()) {
+            clearPendingState();
+            setStatus("complete", "✔ Updated");
+          } else {
+            setStatus("pending");
+          }
+        } else {
+          setStatus(null);
+        }
+
+        const startToUse = inPendingMode && pendingStart ? pendingStart : dataStart;
+        if (startToUse) {
+          render(startToUse, cycleLength, phaseValue);
+        }
+      }
+
+      startCycleButtonEl.addEventListener("click", async () => {
         if (startCycleButtonEl.disabled) return;
         startCycleButtonEl.disabled = true;
         const shouldStart = window.confirm("Start a new cycle today?");
@@ -286,75 +368,38 @@
           return;
         }
         const todayIso = toLocalISODate(new Date());
-        console.info("[cycle-overlay] local override set", { todayIso });
-        localStorage.setItem("localStartOverride", todayIso);
+        setPendingState(todayIso);
+        setStatus("pending");
         render(todayIso, currentCycleLength, currentPhase);
         showLocalOnlyHint(todayIso);
+        try {
+          await callStartCycle(todayIso);
+          await waitForPublishedStart(todayIso);
+          await loadAndRender(true);
+        } catch (error) {
+          clearPendingState();
+          setStatus("complete", "Update failed");
+          console.error(error);
+        } finally {
+          startCycleButtonEl.disabled = false;
+        }
       });
 
-      if (effectiveStart && inPendingMode) {
-        render(effectiveStart, defaultCycleLength, "");
+      if (inPendingMode && pendingStart) {
+        setStatus("pending");
+        render(pendingStart, defaultCycleLength, "");
       }
 
-      fetch("./data.json")
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`Status load failed (${response.status})`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          const dataStart =
-            data.lastPeriodStart || data.last_period_start || data.cycleStart;
-          const overrideStart = localStorage.getItem("localStartOverride");
-          const overrideStartDate = parseLocalISODate(overrideStart);
-          const cycleLength =
-            typeof data.cycleLength === "number" ? data.cycleLength : defaultCycleLength;
-          const dataStartDate = parseLocalISODate(dataStart);
-          const phaseValue = normalizePhase(data.phase, data.phase_short);
-          currentCycleLength = cycleLength;
-          currentPhase = phaseValue;
-
-          if (inPendingMode && effectiveStart) {
-            const pendingDate = parseLocalISODate(effectiveStart);
-            if (dataStartDate && pendingDate) {
-              const isComplete = dataStartDate.getTime() >= pendingDate.getTime();
-              if (isComplete) {
-                setStatus("complete", "✔️ Updated");
-                localStorage.removeItem("pendingStart");
-                localStorage.removeItem("cycleOverlayUpdating");
-                inPendingMode = false;
-                effectiveStart = dataStart;
-              } else {
-                setStatus("pending");
-                effectiveStart = effectiveStart;
-              }
-            }
-          }
-
-          const startToUse =
-            effectiveStart ||
-            (overrideStartDate &&
-            (!dataStartDate || overrideStartDate.getTime() >= dataStartDate.getTime())
-              ? overrideStart
-              : dataStart);
-          if (startToUse) {
-            render(startToUse, cycleLength, phaseValue);
-          }
-          if (overrideStartDate) {
-            showLocalOnlyHint(overrideStart);
-          }
-        })
-        .catch((error) => {
-          setStatus(null);
-          console.error(error);
-          const cycleDayValue = Number(cycleNumberEl.textContent);
-          if (!Number.isNaN(cycleDayValue)) {
-            updateCopy(cycleDayValue, "");
-            updateStartButton(cycleDayValue);
-          }
-          startCycleButtonEl.disabled = false;
-        });
+      loadAndRender(true).catch((error) => {
+        setStatus(null);
+        clearPendingState();
+        console.error(error);
+        const cycleDayValue = Number(cycleNumberEl.textContent);
+        if (!Number.isNaN(cycleDayValue)) {
+          updateCopy(cycleDayValue, "");
+          updateStartButton(cycleDayValue);
+        }
+      });
 
       const reloadParams = new URLSearchParams(window.location.search);
       if (reloadParams.get("reload") === "1") {

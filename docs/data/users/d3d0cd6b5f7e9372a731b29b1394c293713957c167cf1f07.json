@@ -1,0 +1,24 @@
+{
+  "cycleStart": "2026-02-03",
+  "cycleLength": 28,
+  "generatedAt": "2026-02-28T18:03:03Z",
+  "source": "schedule",
+  "generated_at": "2026-02-28T18:03:03Z",
+  "today": "2026-02-28",
+  "last_period_start": "2026-02-03",
+  "previous_period_start": null,
+  "history": [
+    "2026-02-03"
+  ],
+  "cycle_day": 26,
+  "phase": "Luteal",
+  "phase_short": "Lut",
+  "phase_emoji": "🌙",
+  "last_cycle_length_days": null,
+  "avg_cycle_length_days": 28,
+  "predicted_next_start": "2026-03-03",
+  "predicted_ovulation_day": "2026-02-17",
+  "note": "Predictions are approximate (±2–3 days).",
+  "token": "d3d0cd6b5f7e9372a731b29b1394c293713957c167cf1f07",
+  "label": "Kseniia"
+}

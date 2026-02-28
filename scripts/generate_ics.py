@@ -1,39 +1,28 @@
 #!/usr/bin/env python3
+import csv
 import json
 import os
 from bisect import bisect_right
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import Optional
 
-CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.json"
-DATA_PATH = Path(__file__).resolve().parent.parent / "data.json"
-OUTPUT_PATH = Path(__file__).resolve().parent.parent / "docs" / "calendar.ics"
-APP_DATA_PATH = Path(__file__).resolve().parent.parent / "docs" / "app" / "data.json"
+ROOT = Path(__file__).resolve().parent.parent
+CONFIG_PATH = ROOT / "config.json"
+LEGACY_DATA_PATH = ROOT / "data.json"
+USERS_CSV_PATH = ROOT / "docs" / "data" / "users.csv"
+USERS_SOURCE_DIR = ROOT / "data" / "users"
+CAL_OUTPUT_DIR = ROOT / "docs" / "cal"
+APP_USERS_OUTPUT_DIR = ROOT / "docs" / "data" / "users"
+LEGACY_CAL_OUTPUT_PATH = ROOT / "docs" / "calendar.ics"
+LEGACY_APP_OUTPUT_PATH = ROOT / "docs" / "app" / "data.json"
 
 HYPOTHETICAL_WINDOW_DAYS = 5
 
 
-def load_config(path: Path) -> dict:
+def load_json(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
-
-def load_cycle_data(path: Path) -> tuple[date, list[str]]:
-    if not path.exists():
-        raise FileNotFoundError(f"Missing source-of-truth file: {path}")
-
-    data = load_config(path)
-    value = data.get("last_period_start")
-    history = data.get("history", [])
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError("data.json must define last_period_start as YYYY-MM-DD")
-
-    history_list = []
-    if isinstance(history, list):
-        for item in history:
-            if isinstance(item, str) and item.strip():
-                history_list.append(item)
-
-    return parse_date(value), history_list
 
 
 def parse_date(value: str) -> date:
@@ -126,6 +115,7 @@ def build_ics(
     lines.append("END:VCALENDAR")
     return "\r\n".join(lines) + "\r\n"
 
+
 def compute_status(
     today: date,
     last_period_start: date,
@@ -186,6 +176,7 @@ def compute_status(
     generated_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     return {
         "cycleStart": last_period_start.isoformat(),
+        "cycleLength": cycle_length,
         "generatedAt": generated_at,
         "source": source,
         "generated_at": generated_at,
@@ -205,13 +196,101 @@ def compute_status(
     }
 
 
-def main() -> None:
-    config = load_config(CONFIG_PATH)
-    last_period_start, history = load_cycle_data(DATA_PATH)
-    cycle_length = int(config.get("cycle_length", 28))
-    period_length = int(config.get("period_length", 3))
-    months_ahead = int(config.get("months_ahead", 12))
-    calendar_name = str(config.get("calendar_name", "Cycle"))
+def load_user_rows(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        rows = []
+        for row in reader:
+            token = (row.get("token") or "").strip()
+            start_date = (row.get("startDate") or "").strip()
+            label = (row.get("label") or token).strip()
+            cycle_length_raw = (row.get("cycleLength") or "").strip()
+            cycle_length = None
+            if cycle_length_raw.isdigit():
+                cycle_length = int(cycle_length_raw)
+            if token and start_date:
+                rows.append(
+                    {
+                        "token": token,
+                        "label": label,
+                        "start_date": start_date,
+                        "cycle_length": cycle_length,
+                    }
+                )
+        return rows
+
+
+def normalize_history(history: list[str], start_date: str) -> list[str]:
+    values = []
+    seen = set()
+    for item in history:
+        if not isinstance(item, str):
+            continue
+        value = item.strip()
+        if not value:
+            continue
+        try:
+            parse_date(value)
+        except ValueError:
+            continue
+        if value in seen:
+            continue
+        seen.add(value)
+        values.append(value)
+    if start_date not in seen:
+        values.append(start_date)
+    values.sort()
+    return values
+
+
+def ensure_user_source(path: Path, start_date: str, cycle_length: Optional[int]) -> dict:
+    data = {}
+    if path.exists():
+        try:
+            data = load_json(path)
+        except json.JSONDecodeError:
+            data = {}
+
+    existing_start = data.get("last_period_start")
+    if isinstance(existing_start, str) and existing_start.strip():
+        start = existing_start.strip()
+    else:
+        start = start_date
+
+    history = data.get("history")
+    if not isinstance(history, list):
+        history = []
+    history = normalize_history(history, start)
+
+    next_data = {
+        "last_period_start": start,
+        "history": history,
+    }
+    if isinstance(data.get("cycle_length"), int):
+        next_data["cycle_length"] = data["cycle_length"]
+    elif cycle_length is not None:
+        next_data["cycle_length"] = cycle_length
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(next_data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return next_data
+
+
+def generate_one(
+    token: str,
+    label: str,
+    cycle_data: dict,
+    cycle_length: int,
+    period_length: int,
+    months_ahead: int,
+    calendar_name: str,
+    source: str,
+) -> tuple[str, dict]:
+    last_period_start = parse_date(cycle_data["last_period_start"])
+    history_values = cycle_data.get("history", [])
+    history = [item for item in history_values if isinstance(item, str) and item.strip()]
 
     today = datetime.utcnow().date()
     days_ahead = 365 if months_ahead == 12 else int(round(months_ahead * 30.5))
@@ -226,13 +305,15 @@ def main() -> None:
     cycle_starts = sorted(set(cycle_starts))
     start_date = cycle_starts[0]
     last_known_start = cycle_starts[-1]
+
     next_start = last_known_start + timedelta(days=cycle_length)
     while next_start <= end_date:
         cycle_starts.append(next_start)
         next_start += timedelta(days=cycle_length)
 
+    calendar_title = f"{calendar_name} - {label}" if label else calendar_name
     ics_text = build_ics(
-        calendar_name,
+        calendar_title,
         start_date,
         end_date,
         cycle_starts,
@@ -241,10 +322,6 @@ def main() -> None:
         period_length,
     )
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with OUTPUT_PATH.open("w", encoding="utf-8", newline="\n") as f:
-        f.write(ics_text)
-    source = os.environ.get("STATUS_SOURCE", "schedule")
     status = compute_status(
         today=today,
         last_period_start=last_period_start,
@@ -253,10 +330,80 @@ def main() -> None:
         period_length=period_length,
         source=source,
     )
-    APP_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with APP_DATA_PATH.open("w", encoding="utf-8", newline="\n") as f:
-        json.dump(status, f, ensure_ascii=False, indent=2)
+    status["token"] = token
+    status["label"] = label
+
+    return ics_text, status
+
+
+def write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="\n") as f:
+        f.write(content)
+
+
+def write_json(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="\n") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
         f.write("\n")
+
+
+def main() -> None:
+    config = load_json(CONFIG_PATH)
+    cycle_length_default = int(config.get("cycle_length", 28))
+    period_length = int(config.get("period_length", 3))
+    months_ahead = int(config.get("months_ahead", 12))
+    calendar_name = str(config.get("calendar_name", "Cycle"))
+    source = os.environ.get("STATUS_SOURCE", "schedule")
+
+    rows = load_user_rows(USERS_CSV_PATH)
+
+    generated = []
+    for row in rows:
+        token = row["token"]
+        label = row["label"]
+        row_start = row["start_date"]
+        row_cycle_length = row["cycle_length"]
+
+        source_path = USERS_SOURCE_DIR / f"{token}.json"
+        source_data = ensure_user_source(source_path, row_start, row_cycle_length)
+
+        cycle_length = int(source_data.get("cycle_length") or row_cycle_length or cycle_length_default)
+        ics_text, status = generate_one(
+            token=token,
+            label=label,
+            cycle_data=source_data,
+            cycle_length=cycle_length,
+            period_length=period_length,
+            months_ahead=months_ahead,
+            calendar_name=calendar_name,
+            source=source,
+        )
+
+        write_text(CAL_OUTPUT_DIR / f"{token}.ics", ics_text)
+        write_json(APP_USERS_OUTPUT_DIR / f"{token}.json", status)
+        generated.append({"token": token, "status": status, "ics": ics_text})
+
+    # Backward compatibility for old single-user URLs.
+    if generated:
+        write_text(LEGACY_CAL_OUTPUT_PATH, generated[0]["ics"])
+        write_json(LEGACY_APP_OUTPUT_PATH, generated[0]["status"])
+    elif LEGACY_DATA_PATH.exists():
+        legacy_data = load_json(LEGACY_DATA_PATH)
+        legacy_cycle_length = int(legacy_data.get("cycle_length") or cycle_length_default)
+        ics_text, status = generate_one(
+            token="legacy",
+            label="Legacy",
+            cycle_data=legacy_data,
+            cycle_length=legacy_cycle_length,
+            period_length=period_length,
+            months_ahead=months_ahead,
+            calendar_name=calendar_name,
+            source=source,
+        )
+        write_text(LEGACY_CAL_OUTPUT_PATH, ics_text)
+        write_json(LEGACY_APP_OUTPUT_PATH, status)
 
 
 if __name__ == "__main__":
