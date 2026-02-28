@@ -1,18 +1,19 @@
 # Start New Cycle Persistence Notes
 
 ## Source of truth
-- Canonical cycle start source is `data.json` at repo root.
-- `docs/app/data.json` and `docs/calendar.ics` are generated outputs from `scripts/generate_ics.py`.
-- `config.json` now contains only generation settings (`cycle_length`, `period_length`, `months_ahead`, `calendar_name`).
 
-## Start new cycle button behavior (static site)
-- The app is hosted on GitHub Pages and has no backend token service.
-- Button updates local UI + `localStorage` only.
-- App now explicitly tells the user this is device-only and links to:
-  - edit `data.json`
-  - run `Generate Calendar` workflow
+- Canonical source per user: `data/users/<token>.json`.
+- `docs/data/users/<token>.json` and `docs/cal/<token>.ics` are generated outputs.
+- `config.json` contains global generation defaults.
 
-## Manual global update flow
-1. Edit `data.json` (`last_period_start` and `history`).
-2. Run GitHub Actions workflow: `.github/workflows/generate.yml`.
-3. Wait for Pages deploy; then all devices/incognito and subscribed ICS reflect the new date.
+## Start new cycle flow
+
+- App reads token `t` from URL and loads `docs/data/users/<token>.json`.
+- Button calls Cloudflare Worker `/start?date=YYYY-MM-DD&t=<token>`.
+- Worker updates `data/users/<token>.json` in GitHub.
+- Push triggers workflow `.github/workflows/generate.yml`.
+- Workflow regenerates per-user JSON + ICS and commits generated files.
+
+## Compatibility
+
+Legacy files (`docs/app/data.json`, `docs/calendar.ics`) are still generated from the first user row in `docs/data/users.csv`.
