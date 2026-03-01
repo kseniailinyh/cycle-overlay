@@ -9,11 +9,6 @@ This repository generates per-user iCalendar (`.ics`) files and per-user dashboa
 - Generated calendar per user: `docs/cal/<token>.ics`
 - Generated app status per user: `docs/data/users/<token>.json`
 
-Backward-compatible files are still generated:
-
-- `docs/calendar.ics`
-- `docs/app/data.json`
-
 ## Configure
 
 1. Add/update user row in `docs/data/users.csv`.
