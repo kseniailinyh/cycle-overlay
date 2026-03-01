@@ -1,24 +1,24 @@
 {
-  "cycleStart": "2026-01-21",
-  "cycleLength": 30,
+  "cycleStart": "2026-02-10",
+  "cycleLength": 28,
   "generatedAt": "2026-03-01T20:44:24Z",
   "source": "schedule",
   "generated_at": "2026-03-01T20:44:24Z",
   "today": "2026-03-01",
-  "last_period_start": "2026-01-21",
+  "last_period_start": "2026-02-10",
   "previous_period_start": null,
   "history": [
-    "2026-01-21"
+    "2026-02-10"
   ],
-  "cycle_day": 40,
+  "cycle_day": 20,
   "phase": "Luteal",
   "phase_short": "Lut",
   "phase_emoji": "🌙",
   "last_cycle_length_days": null,
-  "avg_cycle_length_days": 30,
-  "predicted_next_start": "2026-02-20",
-  "predicted_ovulation_day": "2026-02-06",
+  "avg_cycle_length_days": 28,
+  "predicted_next_start": "2026-03-10",
+  "predicted_ovulation_day": "2026-02-24",
   "note": "Predictions are approximate (±2–3 days).",
-  "token": "f22751226dae277efc7c1a6c92dbb74b7c9d9e45465d3a25",
-  "label": "Tester 2"
+  "token": "cb4ed314c520fe2475a6411738c41289b798add30c280508",
+  "label": "test_account"
 }

@@ -84,8 +84,9 @@
       const apiBaseParam = (params.get("api") || "").trim();
       const defaultApiBase = "https://cycle-overlay-api.ksenia-ilinyh.workers.dev";
       const apiBase = (apiBaseParam || defaultApiBase).replace(/\/+$/, "");
-      const pendingStartKey = "pendingStart";
-      const updatingKey = "cycleOverlayUpdating";
+      const tokenStorageSuffix = tokenParam || "public";
+      const pendingStartKey = `pendingStart:${tokenStorageSuffix}`;
+      const updatingKey = `cycleOverlayUpdating:${tokenStorageSuffix}`;
       const pollIntervalMs = 5000;
       const pollTimeoutMs = 180000;
       const defaultCycleLength = 28;
@@ -178,6 +179,21 @@
         messageDescriptionEl.hidden = true;
         messageTitleEl.textContent = "Cycle Overlay";
         messageDescriptionEl.textContent = "";
+      }
+
+      function renderDataUnavailable() {
+        setStatus(null);
+        clearPendingState();
+        cycleNumberEl.textContent = "—";
+        prevDateEl.textContent = "—";
+        nextDateEl.textContent = "—";
+        startCycleButtonEl.hidden = true;
+        startCycleHintEl.hidden = true;
+        startCycleHintEl.textContent = "";
+        messageTitleEl.hidden = false;
+        messageDescriptionEl.hidden = false;
+        messageTitleEl.textContent = "Data unavailable";
+        messageDescriptionEl.textContent = "User data not found for this token.";
       }
 
       function normalizePhase(phase, phaseShort) {
@@ -428,14 +444,8 @@
         }
 
         loadAndRender(true).catch((error) => {
-          setStatus(null);
-          clearPendingState();
           console.error(error);
-          const cycleDayValue = Number(cycleNumberEl.textContent);
-          if (!Number.isNaN(cycleDayValue)) {
-            updateCopy(cycleDayValue, "");
-            updateStartButton(cycleDayValue);
-          }
+          renderDataUnavailable();
         });
       }
 
