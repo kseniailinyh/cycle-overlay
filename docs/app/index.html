@@ -75,6 +75,10 @@
       const messageDescriptionEl = document.getElementById("messageDescription");
       const startCycleButtonEl = document.getElementById("startCycleButton");
       const startCycleHintEl = document.getElementById("startCycleHint");
+      const dashboardEl = document.querySelector(".dashboard");
+      const topEl = document.querySelector(".top");
+      const cycleDayEl = document.querySelector(".cycle-day");
+      const bottomEl = document.querySelector(".bottom");
       const params = new URLSearchParams(window.location.search);
       const tokenParam = (params.get("t") || "").trim();
       const apiBaseParam = (params.get("api") || "").trim();
@@ -153,6 +157,27 @@
         } else {
           startCycleButtonEl.hidden = true;
         }
+      }
+
+      function renderPublicPlaceholder() {
+        setStatus(null);
+        clearPendingState();
+        dashboardEl.classList.add("public-placeholder");
+        topEl.hidden = true;
+        topEl.style.display = "none";
+        cycleDayEl.hidden = true;
+        cycleDayEl.style.display = "none";
+        bottomEl.hidden = true;
+        bottomEl.style.display = "none";
+        startCycleButtonEl.hidden = true;
+        startCycleHintEl.hidden = true;
+        startCycleHintEl.textContent = "";
+        prevDateEl.textContent = "—";
+        nextDateEl.textContent = "—";
+        messageTitleEl.hidden = false;
+        messageDescriptionEl.hidden = true;
+        messageTitleEl.textContent = "Cycle Overlay";
+        messageDescriptionEl.textContent = "";
       }
 
       function normalizePhase(phase, phaseShort) {
@@ -269,9 +294,10 @@
       }
 
       async function fetchStatusData(cacheBust = false) {
-        const dataPath = tokenParam
-          ? `../data/users/${encodeURIComponent(tokenParam)}.json`
-          : "./data.json";
+        if (!tokenParam) {
+          throw new Error("Missing token. Add ?t=<token> to the dashboard URL.");
+        }
+        const dataPath = `../data/users/${encodeURIComponent(tokenParam)}.json`;
         const requestUrl = new URL(dataPath, window.location.href);
         if (cacheBust) {
           requestUrl.searchParams.set("ts", Date.now().toString());
@@ -385,21 +411,33 @@
         }
       });
 
-      if (inPendingMode && pendingStart) {
-        setStatus("pending");
-        render(pendingStart, defaultCycleLength, "");
-      }
+      if (!tokenParam) {
+        renderPublicPlaceholder();
+      } else {
+        dashboardEl.classList.remove("public-placeholder");
+        topEl.hidden = false;
+        topEl.style.display = "";
+        cycleDayEl.hidden = false;
+        cycleDayEl.style.display = "";
+        bottomEl.hidden = false;
+        bottomEl.style.display = "";
 
-      loadAndRender(true).catch((error) => {
-        setStatus(null);
-        clearPendingState();
-        console.error(error);
-        const cycleDayValue = Number(cycleNumberEl.textContent);
-        if (!Number.isNaN(cycleDayValue)) {
-          updateCopy(cycleDayValue, "");
-          updateStartButton(cycleDayValue);
+        if (inPendingMode && pendingStart) {
+          setStatus("pending");
+          render(pendingStart, defaultCycleLength, "");
         }
-      });
+
+        loadAndRender(true).catch((error) => {
+          setStatus(null);
+          clearPendingState();
+          console.error(error);
+          const cycleDayValue = Number(cycleNumberEl.textContent);
+          if (!Number.isNaN(cycleDayValue)) {
+            updateCopy(cycleDayValue, "");
+            updateStartButton(cycleDayValue);
+          }
+        });
+      }
 
       const reloadParams = new URLSearchParams(window.location.search);
       if (reloadParams.get("reload") === "1") {
