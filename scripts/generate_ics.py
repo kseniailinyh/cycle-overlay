@@ -210,7 +210,7 @@ def load_user_rows(path: Path) -> list[dict]:
             cycle_length = None
             if cycle_length_raw.isdigit():
                 cycle_length = int(cycle_length_raw)
-            if token and start_date:
+            if token:
                 rows.append(
                     {
                         "token": token,
@@ -222,7 +222,7 @@ def load_user_rows(path: Path) -> list[dict]:
         return rows
 
 
-def normalize_history(history: list[str], start_date: str) -> list[str]:
+def normalize_history(history: list[str], start_date: Optional[str]) -> list[str]:
     values = []
     seen = set()
     for item in history:
@@ -239,13 +239,13 @@ def normalize_history(history: list[str], start_date: str) -> list[str]:
             continue
         seen.add(value)
         values.append(value)
-    if start_date not in seen:
+    if start_date and start_date not in seen:
         values.append(start_date)
     values.sort()
     return values
 
 
-def ensure_user_source(path: Path, start_date: str, cycle_length: Optional[int]) -> dict:
+def ensure_user_source(path: Path, start_date: Optional[str], cycle_length: Optional[int]) -> dict:
     data = {}
     if path.exists():
         try:
@@ -256,8 +256,10 @@ def ensure_user_source(path: Path, start_date: str, cycle_length: Optional[int])
     existing_start = data.get("last_period_start")
     if isinstance(existing_start, str) and existing_start.strip():
         start = existing_start.strip()
-    else:
+    elif start_date:
         start = start_date
+    else:
+        raise ValueError(f"Missing startDate for token '{path.stem}' and source has no last_period_start")
 
     history = data.get("history")
     if not isinstance(history, list):
@@ -367,7 +369,12 @@ def main() -> None:
         row_cycle_length = row["cycle_length"]
 
         source_path = USERS_SOURCE_DIR / f"{token}.json"
-        source_data = ensure_user_source(source_path, row_start, row_cycle_length)
+        if not row_start and not source_path.exists():
+            raise ValueError(
+                f"Missing startDate for token '{token}' in docs/data/users.csv and no source file at {source_path}"
+            )
+
+        source_data = ensure_user_source(source_path, row_start or None, row_cycle_length)
 
         cycle_length = int(source_data.get("cycle_length") or row_cycle_length or cycle_length_default)
         ics_text, status = generate_one(
