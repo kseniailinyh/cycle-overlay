@@ -1,9 +1,9 @@
 {
   "cycleStart": "2026-01-21",
   "cycleLength": 30,
-  "generatedAt": "2026-03-01T20:47:44Z",
+  "generatedAt": "2026-03-01T20:51:20Z",
   "source": "schedule",
-  "generated_at": "2026-03-01T20:47:44Z",
+  "generated_at": "2026-03-01T20:51:20Z",
   "today": "2026-03-01",
   "last_period_start": "2026-01-21",
   "previous_period_start": null,
@@ -20,5 +20,5 @@
   "predicted_ovulation_day": "2026-02-06",
   "note": "Predictions are approximate (±2–3 days).",
   "token": "f22751226dae277efc7c1a6c92dbb74b7c9d9e45465d3a25",
-  "label": "Tester 2"
+  "label": "anna_vasilevna"
 }
