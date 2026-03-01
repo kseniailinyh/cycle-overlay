@@ -12,6 +12,8 @@ This repository generates per-user iCalendar (`.ics`) files and per-user dashboa
 ## Configure
 
 1. Add/update user row in `docs/data/users.csv`.
+   - `startDate` is required for brand-new users.
+   - For existing users with `data/users/<token>.json`, `startDate` can be left empty.
 2. Ensure `data/users/<token>.json` exists for that token.
 
 User source file format:
