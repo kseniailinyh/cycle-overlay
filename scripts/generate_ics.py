@@ -9,13 +9,10 @@ from typing import Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "config.json"
-LEGACY_DATA_PATH = ROOT / "data.json"
 USERS_CSV_PATH = ROOT / "docs" / "data" / "users.csv"
 USERS_SOURCE_DIR = ROOT / "data" / "users"
 CAL_OUTPUT_DIR = ROOT / "docs" / "cal"
 APP_USERS_OUTPUT_DIR = ROOT / "docs" / "data" / "users"
-LEGACY_CAL_OUTPUT_PATH = ROOT / "docs" / "calendar.ics"
-LEGACY_APP_OUTPUT_PATH = ROOT / "docs" / "app" / "data.json"
 
 HYPOTHETICAL_WINDOW_DAYS = 5
 
@@ -361,7 +358,6 @@ def main() -> None:
 
     rows = load_user_rows(USERS_CSV_PATH)
 
-    generated = []
     for row in rows:
         token = row["token"]
         label = row["label"]
@@ -390,27 +386,6 @@ def main() -> None:
 
         write_text(CAL_OUTPUT_DIR / f"{token}.ics", ics_text)
         write_json(APP_USERS_OUTPUT_DIR / f"{token}.json", status)
-        generated.append({"token": token, "status": status, "ics": ics_text})
-
-    # Backward compatibility for old single-user URLs.
-    if generated:
-        write_text(LEGACY_CAL_OUTPUT_PATH, generated[0]["ics"])
-        write_json(LEGACY_APP_OUTPUT_PATH, generated[0]["status"])
-    elif LEGACY_DATA_PATH.exists():
-        legacy_data = load_json(LEGACY_DATA_PATH)
-        legacy_cycle_length = int(legacy_data.get("cycle_length") or cycle_length_default)
-        ics_text, status = generate_one(
-            token="legacy",
-            label="Legacy",
-            cycle_data=legacy_data,
-            cycle_length=legacy_cycle_length,
-            period_length=period_length,
-            months_ahead=months_ahead,
-            calendar_name=calendar_name,
-            source=source,
-        )
-        write_text(LEGACY_CAL_OUTPUT_PATH, ics_text)
-        write_json(LEGACY_APP_OUTPUT_PATH, status)
 
 
 if __name__ == "__main__":

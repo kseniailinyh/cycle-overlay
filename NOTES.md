@@ -13,7 +13,3 @@
 - Worker updates `data/users/<token>.json` in GitHub.
 - Push triggers workflow `.github/workflows/generate.yml`.
 - Workflow regenerates per-user JSON + ICS and commits generated files.
-
-## Compatibility
-
-Legacy files (`docs/app/data.json`, `docs/calendar.ics`) are still generated from the first user row in `docs/data/users.csv`.

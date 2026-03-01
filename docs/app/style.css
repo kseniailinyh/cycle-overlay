@@ -35,6 +35,11 @@ body {
   color: var(--text-color);
 }
 
+.dashboard.public-placeholder {
+  grid-template-rows: 1fr;
+  padding: var(--pad);
+}
+
 .top {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
