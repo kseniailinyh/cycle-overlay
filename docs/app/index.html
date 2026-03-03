@@ -90,10 +90,28 @@
       const pollIntervalMs = 5000;
       const pollTimeoutMs = 180000;
       const defaultCycleLength = 28;
+      const copyDataPath = "./data/copy/en.json";
+      const fallbackCycleCopy = {
+        defaults: {
+          unknownDay: {
+            title: "Cycle day",
+            description:
+              "Log your period start to see your current day and a gentle daily note.",
+          },
+          loadError: {
+            title: "Oops",
+            description: "Couldn’t load the daily text. Please refresh the page.",
+          },
+        },
+        days: {},
+      };
       let currentCycleLength = defaultCycleLength;
       let currentPhase = "";
       let pendingStart = localStorage.getItem(pendingStartKey);
       let inPendingMode = Boolean(pendingStart && parseLocalISODate(pendingStart));
+      let cycleCopyCache = fallbackCycleCopy;
+      let cycleCopyLoadPromise = null;
+      let cycleCopyLoadFailed = false;
 
       function setStatus(mode, text) {
         if (!mode) {
@@ -226,7 +244,8 @@
         );
         const cycleDay = Math.max(0, daysBetween(startDate, todayLocal) + 1);
         cycleNumberEl.textContent = String(cycleDay);
-        updateCopy(cycleDay, phaseValue);
+        void phaseValue;
+        updateCopy(cycleDay);
         updateStartButton(cycleDay);
 
         const prevDate = new Date(startDate);
@@ -237,54 +256,48 @@
         nextDateEl.classList.remove("updating");
       }
 
-      function getCycleCopy(cycleDay, phase) {
-        if (cycleDay === 1) {
-          return {
-            title: "Extra gentle",
-            description:
-              "Slower rhythm today. Gentle movement, warm tea, and a softer pace make a big difference.",
-          };
-        }
-        if (cycleDay === 2) {
-          return {
-            title: "Feeling lighter",
-            description:
-              "The heaviness starts to fade. You might feel more like yourself again – still soft, but noticeably easier.",
-          };
-        }
-        if (cycleDay === 3) {
-          return {
-            title: "Energy is coming back",
-            description:
-              "Momentum is quietly building. Your body feels stronger, clearer, and more ready to move forward.",
-          };
-        }
-        if (cycleDay >= 4 && cycleDay <= 14 && (!phase || phase === "follicular")) {
-          return {
-            title: "Go mode",
-            description:
-              '"Let’s do it!" phase. Energy, focus, and confidence are rising – a great time to start, explore, and take action.',
-          };
-        }
-        if (cycleDay >= 15) {
-          return {
-            title: "Slow down",
-            description:
-              "Energy gradually turns inward. Lower the pace, simplify plans, and give yourself a bit more care and space.",
-          };
-        }
-        return null;
+      async function loadCycleCopy() {
+        if (cycleCopyLoadPromise) return cycleCopyLoadPromise;
+        cycleCopyLoadPromise = fetch(copyDataPath, { cache: "no-store" })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`Copy load failed (${response.status})`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            const hasDefaults = data && typeof data === "object" && data.defaults;
+            const hasDays = data && typeof data === "object" && data.days;
+            if (!hasDefaults || !hasDays) {
+              throw new Error("Copy load failed (invalid shape)");
+            }
+            cycleCopyCache = data;
+            cycleCopyLoadFailed = false;
+          })
+          .catch((error) => {
+            cycleCopyCache = fallbackCycleCopy;
+            cycleCopyLoadFailed = true;
+            console.error(error);
+          });
+        return cycleCopyLoadPromise;
       }
 
-      function updateCopy(cycleDay, phase) {
-        const copy = getCycleCopy(cycleDay, phase);
-        if (!copy) {
-          messageTitleEl.hidden = true;
-          messageDescriptionEl.hidden = true;
-          messageTitleEl.textContent = "";
-          messageDescriptionEl.textContent = "";
-          return;
+      function getCopyForDay(cycleDay) {
+        const defaults = cycleCopyCache.defaults || fallbackCycleCopy.defaults;
+        if (cycleCopyLoadFailed) {
+          return defaults.loadError;
         }
+        if (Number.isInteger(cycleDay) && cycleDay >= 1 && cycleDay <= 28) {
+          return cycleCopyCache.days[String(cycleDay)] || defaults.unknownDay;
+        }
+        if (Number.isInteger(cycleDay) && cycleDay >= 29) {
+          return cycleCopyCache.days["29plus"] || defaults.unknownDay;
+        }
+        return defaults.unknownDay;
+      }
+
+      function updateCopy(cycleDay) {
+        const copy = getCopyForDay(cycleDay);
         messageTitleEl.hidden = false;
         messageDescriptionEl.hidden = false;
         messageTitleEl.textContent = copy.title;
@@ -431,9 +444,14 @@
         }
       });
 
-      if (!tokenParam) {
-        renderPublicPlaceholder();
-      } else {
+      async function initDashboard() {
+        await loadCycleCopy();
+
+        if (!tokenParam) {
+          renderPublicPlaceholder();
+          return;
+        }
+
         dashboardEl.classList.remove("public-placeholder");
         topEl.hidden = false;
         topEl.style.display = "";
@@ -452,6 +470,11 @@
           renderDataUnavailable();
         });
       }
+
+      initDashboard().catch((error) => {
+        console.error(error);
+        renderDataUnavailable();
+      });
 
       const reloadParams = new URLSearchParams(window.location.search);
       if (reloadParams.get("reload") === "1") {
