@@ -1,16 +1,16 @@
 {
   "cycleStart": "2026-02-10",
   "cycleLength": 28,
-  "generatedAt": "2026-03-01T20:53:37Z",
+  "generatedAt": "2026-03-03T15:52:40Z",
   "source": "schedule",
-  "generated_at": "2026-03-01T20:53:37Z",
-  "today": "2026-03-01",
+  "generated_at": "2026-03-03T15:52:40Z",
+  "today": "2026-03-03",
   "last_period_start": "2026-02-10",
   "previous_period_start": null,
   "history": [
     "2026-02-10"
   ],
-  "cycle_day": 20,
+  "cycle_day": 22,
   "phase": "Luteal",
   "phase_short": "Lut",
   "phase_emoji": "🌙",
