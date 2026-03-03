@@ -81,6 +81,7 @@
       const bottomEl = document.querySelector(".bottom");
       const params = new URLSearchParams(window.location.search);
       const tokenParam = (params.get("t") || "").trim();
+      const workerKeyParam = (params.get("key") || params.get("k") || "").trim();
       const apiBaseParam = (params.get("api") || "").trim();
       const defaultApiBase = "https://cycle-overlay-api.ksenia-ilinyh.workers.dev";
       const apiBase = (apiBaseParam || defaultApiBase).replace(/\/+$/, "");
@@ -92,6 +93,7 @@
       const defaultCycleLength = 28;
       let currentCycleLength = defaultCycleLength;
       let currentPhase = "";
+      let lastErrorText = "";
       let pendingStart = localStorage.getItem(pendingStartKey);
       let inPendingMode = Boolean(pendingStart && parseLocalISODate(pendingStart));
 
@@ -309,6 +311,14 @@
         inPendingMode = true;
       }
 
+      function getWorkerAuthKey() {
+        if (workerKeyParam) {
+          localStorage.setItem("cycleOverlayWorkerKey", workerKeyParam);
+          return workerKeyParam;
+        }
+        return (localStorage.getItem("cycleOverlayWorkerKey") || "").trim();
+      }
+
       async function fetchStatusData(cacheBust = false) {
         if (!tokenParam) {
           throw new Error("Missing token. Add ?t=<token> to the dashboard URL.");
@@ -357,19 +367,38 @@
         if (!tokenParam) {
           throw new Error("Missing token. Add ?t=<token> to the dashboard URL.");
         }
+        const workerAuthKey = getWorkerAuthKey();
         const requestUrl = new URL(`${apiBase}/start`);
+        // Keep both old and new parameter names for worker compatibility.
         requestUrl.searchParams.set("date", dateIso);
+        requestUrl.searchParams.set("cycle_start", dateIso);
         requestUrl.searchParams.set("t", tokenParam);
+        requestUrl.searchParams.set("token", tokenParam);
+        if (workerAuthKey) {
+          requestUrl.searchParams.set("key", workerAuthKey);
+        }
+        const headers = {
+          Accept: "application/json",
+        };
+        if (workerAuthKey) {
+          headers.Authorization = `Bearer ${workerAuthKey}`;
+          headers["X-API-Key"] = workerAuthKey;
+        }
         const response = await fetch(requestUrl.toString(), {
           method: "POST",
-          headers: {
-            Accept: "application/json",
-          },
+          headers,
         });
         if (!response.ok) {
           const text = await response.text();
+          lastErrorText = text;
+          if (response.status === 401 && !workerAuthKey) {
+            throw new Error(
+              "Start request failed (401): missing worker auth key. Open app with ?key=<worker-secret>."
+            );
+          }
           throw new Error(`Start request failed (${response.status}): ${text}`);
         }
+        lastErrorText = "";
         return response.json();
       }
 
@@ -420,8 +449,9 @@
           await loadAndRender(true);
         } catch (error) {
           clearPendingState();
+          await loadAndRender(true).catch(() => {});
           setStatus("complete", "Update failed");
-          console.error(error);
+          console.error(error, lastErrorText);
         } finally {
           startCycleButtonEl.disabled = false;
         }
