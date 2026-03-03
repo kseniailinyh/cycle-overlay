@@ -358,8 +358,11 @@
           throw new Error("Missing token. Add ?t=<token> to the dashboard URL.");
         }
         const requestUrl = new URL(`${apiBase}/start`);
+        // Keep both old and new parameter names for worker compatibility.
         requestUrl.searchParams.set("date", dateIso);
+        requestUrl.searchParams.set("cycle_start", dateIso);
         requestUrl.searchParams.set("t", tokenParam);
+        requestUrl.searchParams.set("token", tokenParam);
         const response = await fetch(requestUrl.toString(), {
           method: "POST",
           headers: {
@@ -420,6 +423,7 @@
           await loadAndRender(true);
         } catch (error) {
           clearPendingState();
+          await loadAndRender(true).catch(() => {});
           setStatus("complete", "Update failed");
           console.error(error);
         } finally {
