@@ -1,0 +1,24 @@
+{
+  "cycleStart": "2026-03-03",
+  "cycleLength": 30,
+  "generatedAt": "2026-03-03T17:23:43Z",
+  "source": "schedule",
+  "generated_at": "2026-03-03T17:23:43Z",
+  "today": "2026-03-03",
+  "last_period_start": "2026-03-03",
+  "previous_period_start": null,
+  "history": [
+    "2026-03-03"
+  ],
+  "cycle_day": 1,
+  "phase": "Menstruation",
+  "phase_short": "Men",
+  "phase_emoji": "🩸",
+  "last_cycle_length_days": null,
+  "avg_cycle_length_days": 30,
+  "predicted_next_start": "2026-04-02",
+  "predicted_ovulation_day": "2026-03-19",
+  "note": "Predictions are approximate (±2–3 days).",
+  "token": "6d4d4f686c245042a3f57e684315d0712b2eb974",
+  "label": "Anna_Vasilevna"
+}
