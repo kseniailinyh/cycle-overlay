@@ -1,0 +1,135 @@
+{
+  "meta": {
+    "version": 1,
+    "language": "en",
+    "fallbackKey": "29plus"
+  },
+  "defaults": {
+    "unknownDay": {
+      "title": "Cycle day",
+      "description": "Log your period start to see your current day and a gentle daily note."
+    },
+    "loadError": {
+      "title": "Oops",
+      "description": "Couldn’t load the daily text. Please refresh the page."
+    }
+  },
+  "days": {
+    "1": {
+      "title": "Extra gentle",
+      "description": "Slow everything down. Warm drinks, softer movement, fewer expectations. Your body is working hard — let it."
+    },
+    "2": {
+      "title": "It’s easing",
+      "description": "Still tender, but lighter. Move a little if it feels good. No rush — just a small return to yourself."
+    },
+    "3": {
+      "title": "Energy rising",
+      "description": "Clarity starts peeking through. You may feel more grounded. Take one simple action, that’s enough."
+    },
+    "4": {
+      "title": "Back online",
+      "description": "Strength is coming back. Not full speed yet — but you’re clearly shifting forward."
+    },
+    "5": {
+      "title": "Fresh start",
+      "description": "This is your reset window. Planning feels easier. Try something new today."
+    },
+    "6": {
+      "title": "Momentum building",
+      "description": "Ideas connect faster. Say yes to movement, learning, small risks."
+    },
+    "7": {
+      "title": "Focused",
+      "description": "You can structure chaos today. Good time to decide things."
+    },
+    "8": {
+      "title": "Clear & capable",
+      "description": "Conversations flow better. Reach out, pitch, share."
+    },
+    "9": {
+      "title": "Curious mode",
+      "description": "Explore. Brain is sharp. Absorb, test, iterate."
+    },
+    "10": {
+      "title": "High output",
+      "description": "You can handle more. Just don’t overload yourself because you can."
+    },
+    "11": {
+      "title": "Confident energy",
+      "description": "Speak up. Ask for what you want."
+    },
+    "12": {
+      "title": "Magnetic",
+      "description": "Connection feels natural. Social energy is high."
+    },
+    "13": {
+      "title": "Peak power",
+      "description": "Strong body, sharp mind. Use it intentionally."
+    },
+    "14": {
+      "title": "Full bloom",
+      "description": "Maximum clarity. Big decisions are welcome here."
+    },
+    "15": {
+      "title": "Shift begins",
+      "description": "Energy turns inward. Focus on execution, not expansion."
+    },
+    "16": {
+      "title": "Steady mode",
+      "description": "Less sparkle, more depth. Good for finishing tasks."
+    },
+    "17": {
+      "title": "Refine & edit",
+      "description": "You’ll notice what’s off. Improve, adjust."
+    },
+    "18": {
+      "title": "Sensitive radar",
+      "description": "Emotions sharpen. Protect your space."
+    },
+    "19": {
+      "title": "Selective",
+      "description": "Choose fewer things. Say no more easily."
+    },
+    "20": {
+      "title": "Deep focus",
+      "description": "Great day for solo work."
+    },
+    "21": {
+      "title": "Inner critic awake",
+      "description": "Be careful — not everything is wrong. You’re just more perceptive."
+    },
+    "22": {
+      "title": "Lower battery",
+      "description": "Reduce inputs. Simplify plans."
+    },
+    "23": {
+      "title": "Slow down",
+      "description": "Your body asks for gentleness again."
+    },
+    "24": {
+      "title": "Soft edges",
+      "description": "More rest, warmer food, quieter evenings."
+    },
+    "25": {
+      "title": "Turning inward",
+      "description": "Journaling helps. Reflection feels natural."
+    },
+    "26": {
+      "title": "Almost there",
+      "description": "You may feel stretched. Keep the schedule light."
+    },
+    "27": {
+      "title": "Minimal mode",
+      "description": "Bare minimum is allowed."
+    },
+    "28": {
+      "title": "Release coming",
+      "description": "Close loops. Prepare space for reset."
+    },
+    "29plus": {
+      "title": "Still waiting",
+      "description": "Cycles aren’t clocks. A few days of variation is completely normal. Stay gentle and give your body space."
+    }
+  }
+}
