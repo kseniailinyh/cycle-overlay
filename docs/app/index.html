@@ -384,10 +384,25 @@
           headers.Authorization = `Bearer ${workerAuthKey}`;
           headers["X-API-Key"] = workerAuthKey;
         }
-        const response = await fetch(requestUrl.toString(), {
-          method: "POST",
-          headers,
-        });
+        let response;
+        try {
+          response = await fetch(requestUrl.toString(), {
+            method: "POST",
+            headers,
+          });
+        } catch (error) {
+          // Some worker routes return success without CORS headers.
+          // Retry as fire-and-forget and verify via status polling.
+          if (error instanceof TypeError) {
+            await fetch(requestUrl.toString(), {
+              method: "POST",
+              mode: "no-cors",
+            });
+            lastErrorText = "";
+            return { queued: true, opaque: true };
+          }
+          throw error;
+        }
         if (!response.ok) {
           const text = await response.text();
           lastErrorText = text;
