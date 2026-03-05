@@ -1,0 +1,24 @@
+{
+  "cycleStart": "2026-02-18",
+  "cycleLength": 26,
+  "generatedAt": "2026-03-05T17:10:01Z",
+  "source": "schedule",
+  "generated_at": "2026-03-05T17:10:01Z",
+  "today": "2026-03-05",
+  "last_period_start": "2026-02-18",
+  "previous_period_start": null,
+  "history": [
+    "2026-02-18"
+  ],
+  "cycle_day": 16,
+  "phase": "Luteal",
+  "phase_short": "Lut",
+  "phase_emoji": "🌙",
+  "last_cycle_length_days": null,
+  "avg_cycle_length_days": 26,
+  "predicted_next_start": "2026-03-16",
+  "predicted_ovulation_day": "2026-03-02",
+  "note": "Predictions are approximate (±2–3 days).",
+  "token": "e85a317a203d3ab246b7db9850dd0c0788702cf8",
+  "label": "lukas_fgs"
+}
