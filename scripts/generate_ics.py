@@ -219,6 +219,15 @@ def load_user_rows(path: Path) -> list[dict]:
         return rows
 
 
+def parse_target_tokens(raw_value: str) -> set[str]:
+    tokens = set()
+    for item in raw_value.split(","):
+        token = item.strip()
+        if token:
+            tokens.add(token)
+    return tokens
+
+
 def normalize_history(history: list[str], start_date: Optional[str]) -> list[str]:
     values = []
     seen = set()
@@ -357,6 +366,14 @@ def main() -> None:
     source = os.environ.get("STATUS_SOURCE", "schedule")
 
     rows = load_user_rows(USERS_CSV_PATH)
+    target_tokens_raw = os.environ.get("TARGET_TOKENS", "").strip()
+    target_tokens = parse_target_tokens(target_tokens_raw) if target_tokens_raw else set()
+    if target_tokens:
+        rows_by_token = {row["token"]: row for row in rows}
+        missing_tokens = sorted(target_tokens - set(rows_by_token))
+        if missing_tokens:
+            raise ValueError(f"Unknown token(s) in TARGET_TOKENS: {', '.join(missing_tokens)}")
+        rows = [row for row in rows if row["token"] in target_tokens]
 
     for row in rows:
         token = row["token"]
