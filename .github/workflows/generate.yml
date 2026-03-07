@@ -77,10 +77,73 @@ jobs:
           path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PY
 
+      - name: Determine generation scope
+        id: generate_scope
+        run: |
+          set -euo pipefail
+
+          full_regen="false"
+          target_tokens=""
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            target_tokens="${{ inputs.token }}"
+          else
+            base_commit="${{ github.event.before }}"
+            head_commit="${{ github.sha }}"
+
+            if [ -z "$base_commit" ] || [ "$base_commit" = "0000000000000000000000000000000000000000" ]; then
+              full_regen="true"
+            else
+              changed_files=$(git diff --name-only "$base_commit" "$head_commit")
+
+              if printf '%s\n' "$changed_files" | grep -Eq '^(config\.json|scripts/|\.github/workflows/generate\.yml)'; then
+                full_regen="true"
+              fi
+
+              tokens_from_sources=$(
+                git diff --diff-filter=AM --name-only "$base_commit" "$head_commit" -- 'data/users/*.json' \
+                | sed -nE 's#^data/users/([^/]+)\.json$#\1#p'
+              )
+
+              tokens_from_csv=""
+              if printf '%s\n' "$changed_files" | grep -Eq '^docs/data/users\.csv$'; then
+                csv_added_lines=$(
+                  git diff --unified=0 "$base_commit" "$head_commit" -- docs/data/users.csv \
+                  | awk -F, '/^\+[^+]/ {print $2}'
+                )
+                tokens_from_csv=$(
+                  printf '%s\n' "$csv_added_lines" \
+                  | grep -E '^[A-Za-z0-9]+$' \
+                  | grep -Ev '^token$' || true
+                )
+              fi
+
+              target_tokens=$(
+                printf '%s\n%s\n' "$tokens_from_sources" "$tokens_from_csv" \
+                | sed '/^$/d' \
+                | sort -u \
+                | paste -sd, -
+              )
+
+              if [ -z "$target_tokens" ] && [ "$full_regen" != "true" ]; then
+                full_regen="true"
+              fi
+            fi
+          fi
+
+          echo "full_regen=$full_regen" >> "$GITHUB_OUTPUT"
+          echo "target_tokens=$target_tokens" >> "$GITHUB_OUTPUT"
+
       - name: Generate calendars
         env:
           STATUS_SOURCE: ${{ github.event_name == 'workflow_dispatch' && 'workflow_dispatch' || 'schedule' }}
-        run: python3 scripts/generate_ics.py
+          TARGET_TOKENS: ${{ steps.generate_scope.outputs.target_tokens }}
+        run: |
+          if [ "${{ steps.generate_scope.outputs.full_regen }}" = "true" ]; then
+            TARGET_TOKENS="" python3 scripts/generate_ics.py
+          else
+            TARGET_TOKENS="${TARGET_TOKENS}" python3 scripts/generate_ics.py
+          fi
 
       - name: Validate output
         run: |
