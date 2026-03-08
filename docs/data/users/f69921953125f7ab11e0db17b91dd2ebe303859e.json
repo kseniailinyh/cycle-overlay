@@ -1,24 +1,24 @@
 {
-  "cycleStart": "2026-02-28",
-  "cycleLength": 25,
+  "cycleStart": "2026-03-01",
+  "cycleLength": 29,
   "generatedAt": "2026-03-08T18:21:44Z",
   "source": "schedule",
   "generated_at": "2026-03-08T18:21:44Z",
   "today": "2026-03-08",
-  "last_period_start": "2026-02-28",
+  "last_period_start": "2026-03-01",
   "previous_period_start": null,
   "history": [
-    "2026-02-28"
+    "2026-03-01"
   ],
-  "cycle_day": 9,
+  "cycle_day": 8,
   "phase": "Follicular",
   "phase_short": "Fol",
   "phase_emoji": "🌿",
   "last_cycle_length_days": null,
-  "avg_cycle_length_days": 25,
-  "predicted_next_start": "2026-03-25",
-  "predicted_ovulation_day": "2026-03-11",
+  "avg_cycle_length_days": 29,
+  "predicted_next_start": "2026-03-30",
+  "predicted_ovulation_day": "2026-03-16",
   "note": "Predictions are approximate (±2–3 days).",
-  "token": "a986c5898667abdcbe28c854389c9c152efdd291",
-  "label": "lerybinskaya"
+  "token": "f69921953125f7ab11e0db17b91dd2ebe303859e",
+  "label": "general_mopseg"
 }
