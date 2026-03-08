@@ -1,10 +1,10 @@
 {
   "cycleStart": "2026-02-21",
   "cycleLength": 28,
-  "generatedAt": "2026-03-03T17:48:59Z",
+  "generatedAt": "2026-03-08T14:04:50Z",
   "source": "schedule",
-  "generated_at": "2026-03-03T17:48:59Z",
-  "today": "2026-03-03",
+  "generated_at": "2026-03-08T14:04:50Z",
+  "today": "2026-03-08",
   "last_period_start": "2026-02-21",
   "previous_period_start": "2026-01-25",
   "history": [
@@ -12,10 +12,10 @@
     "2026-01-25",
     "2026-02-21"
   ],
-  "cycle_day": 11,
-  "phase": "Follicular",
-  "phase_short": "Fol",
-  "phase_emoji": "🌿",
+  "cycle_day": 16,
+  "phase": "Luteal",
+  "phase_short": "Lut",
+  "phase_emoji": "🌙",
   "last_cycle_length_days": 27,
   "avg_cycle_length_days": 28,
   "predicted_next_start": "2026-03-21",

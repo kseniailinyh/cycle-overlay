@@ -1,24 +1,24 @@
 {
-  "cycleStart": "2026-02-18",
-  "cycleLength": 26,
+  "cycleStart": "2026-02-10",
+  "cycleLength": 28,
   "generatedAt": "2026-03-08T14:04:51Z",
   "source": "schedule",
   "generated_at": "2026-03-08T14:04:51Z",
   "today": "2026-03-08",
-  "last_period_start": "2026-02-18",
+  "last_period_start": "2026-02-10",
   "previous_period_start": null,
   "history": [
-    "2026-02-18"
+    "2026-02-10"
   ],
-  "cycle_day": 19,
+  "cycle_day": 27,
   "phase": "Luteal",
   "phase_short": "Lut",
   "phase_emoji": "🌙",
   "last_cycle_length_days": null,
-  "avg_cycle_length_days": 26,
-  "predicted_next_start": "2026-03-16",
-  "predicted_ovulation_day": "2026-03-02",
+  "avg_cycle_length_days": 28,
+  "predicted_next_start": "2026-03-10",
+  "predicted_ovulation_day": "2026-02-24",
   "note": "Predictions are approximate (±2–3 days).",
-  "token": "e85a317a203d3ab246b7db9850dd0c0788702cf8",
-  "label": "lukas_fgs"
+  "token": "feca2641f50c403c7339800c363650b84ba079e0",
+  "label": "olga-romanova"
 }
