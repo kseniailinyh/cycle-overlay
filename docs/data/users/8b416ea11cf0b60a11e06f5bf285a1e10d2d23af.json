@@ -1,24 +1,24 @@
 {
-  "cycleStart": "2026-02-28",
-  "cycleLength": 25,
+  "cycleStart": "2026-02-27",
+  "cycleLength": 28,
   "generatedAt": "2026-03-08T20:36:22Z",
   "source": "schedule",
   "generated_at": "2026-03-08T20:36:22Z",
   "today": "2026-03-08",
-  "last_period_start": "2026-02-28",
+  "last_period_start": "2026-02-27",
   "previous_period_start": null,
   "history": [
-    "2026-02-28"
+    "2026-02-27"
   ],
-  "cycle_day": 9,
+  "cycle_day": 10,
   "phase": "Follicular",
   "phase_short": "Fol",
   "phase_emoji": "🌿",
   "last_cycle_length_days": null,
-  "avg_cycle_length_days": 25,
-  "predicted_next_start": "2026-03-25",
-  "predicted_ovulation_day": "2026-03-11",
+  "avg_cycle_length_days": 28,
+  "predicted_next_start": "2026-03-27",
+  "predicted_ovulation_day": "2026-03-13",
   "note": "Predictions are approximate (±2–3 days).",
-  "token": "a986c5898667abdcbe28c854389c9c152efdd291",
-  "label": "lerybinskaya"
+  "token": "8b416ea11cf0b60a11e06f5bf285a1e10d2d23af",
+  "label": "plan_byl_khorosh"
 }
