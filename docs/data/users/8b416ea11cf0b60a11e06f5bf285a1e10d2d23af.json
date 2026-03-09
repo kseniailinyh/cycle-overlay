@@ -1,16 +1,16 @@
 {
   "cycleStart": "2026-02-27",
   "cycleLength": 28,
-  "generatedAt": "2026-03-08T20:43:52Z",
+  "generatedAt": "2026-03-09T08:48:48Z",
   "source": "schedule",
-  "generated_at": "2026-03-08T20:43:52Z",
-  "today": "2026-03-08",
+  "generated_at": "2026-03-09T08:48:48Z",
+  "today": "2026-03-09",
   "last_period_start": "2026-02-27",
   "previous_period_start": null,
   "history": [
     "2026-02-27"
   ],
-  "cycle_day": 10,
+  "cycle_day": 11,
   "phase": "Follicular",
   "phase_short": "Fol",
   "phase_emoji": "🌿",

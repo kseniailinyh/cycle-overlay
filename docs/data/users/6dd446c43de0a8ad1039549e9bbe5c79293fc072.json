@@ -1,0 +1,24 @@
+{
+  "cycleStart": "2026-03-09",
+  "cycleLength": 29,
+  "generatedAt": "2026-03-09T08:48:48Z",
+  "source": "schedule",
+  "generated_at": "2026-03-09T08:48:48Z",
+  "today": "2026-03-09",
+  "last_period_start": "2026-03-09",
+  "previous_period_start": null,
+  "history": [
+    "2026-03-09"
+  ],
+  "cycle_day": 1,
+  "phase": "Menstruation",
+  "phase_short": "Men",
+  "phase_emoji": "🩸",
+  "last_cycle_length_days": null,
+  "avg_cycle_length_days": 29,
+  "predicted_next_start": "2026-04-07",
+  "predicted_ovulation_day": "2026-03-24",
+  "note": "Predictions are approximate (±2–3 days).",
+  "token": "6dd446c43de0a8ad1039549e9bbe5c79293fc072",
+  "label": "mashalutsenko"
+}
