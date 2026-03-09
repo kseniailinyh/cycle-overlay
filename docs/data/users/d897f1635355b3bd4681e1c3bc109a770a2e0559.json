@@ -1,24 +1,24 @@
 {
-  "cycleStart": "2026-02-23",
-  "cycleLength": 38,
+  "cycleStart": "2026-02-28",
+  "cycleLength": 26,
   "generatedAt": "2026-03-09T11:29:25Z",
   "source": "schedule",
   "generated_at": "2026-03-09T11:29:25Z",
   "today": "2026-03-09",
-  "last_period_start": "2026-02-23",
+  "last_period_start": "2026-02-28",
   "previous_period_start": null,
   "history": [
-    "2026-02-23"
+    "2026-02-28"
   ],
-  "cycle_day": 15,
+  "cycle_day": 10,
   "phase": "Follicular",
   "phase_short": "Fol",
   "phase_emoji": "🌿",
   "last_cycle_length_days": null,
-  "avg_cycle_length_days": 38,
-  "predicted_next_start": "2026-04-02",
-  "predicted_ovulation_day": "2026-03-19",
+  "avg_cycle_length_days": 26,
+  "predicted_next_start": "2026-03-26",
+  "predicted_ovulation_day": "2026-03-12",
   "note": "Predictions are approximate (±2–3 days).",
-  "token": "28db19e350e1077fe44bebf834a38cabe9794e8b",
-  "label": "bav.artist"
+  "token": "d897f1635355b3bd4681e1c3bc109a770a2e0559",
+  "label": "planet_dahab"
 }

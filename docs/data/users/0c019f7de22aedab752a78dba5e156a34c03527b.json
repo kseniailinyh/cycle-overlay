@@ -1,24 +1,24 @@
 {
-  "cycleStart": "2026-02-17",
-  "cycleLength": 28,
-  "generatedAt": "2026-03-09T11:29:24Z",
+  "cycleStart": "2026-02-18",
+  "cycleLength": 27,
+  "generatedAt": "2026-03-09T11:29:25Z",
   "source": "schedule",
-  "generated_at": "2026-03-09T11:29:24Z",
+  "generated_at": "2026-03-09T11:29:25Z",
   "today": "2026-03-09",
-  "last_period_start": "2026-02-17",
+  "last_period_start": "2026-02-18",
   "previous_period_start": null,
   "history": [
-    "2026-02-17"
+    "2026-02-18"
   ],
-  "cycle_day": 21,
+  "cycle_day": 20,
   "phase": "Luteal",
   "phase_short": "Lut",
   "phase_emoji": "🌙",
   "last_cycle_length_days": null,
-  "avg_cycle_length_days": 28,
+  "avg_cycle_length_days": 27,
   "predicted_next_start": "2026-03-17",
   "predicted_ovulation_day": "2026-03-03",
   "note": "Predictions are approximate (±2–3 days).",
-  "token": "6966542b4247b6988f791f975722533b3400fcdb",
-  "label": "limonaddic"
+  "token": "0c019f7de22aedab752a78dba5e156a34c03527b",
+  "label": "loliveriya"
 }
