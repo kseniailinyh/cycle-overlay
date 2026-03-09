@@ -1,0 +1,24 @@
+{
+  "cycleStart": "2026-02-28",
+  "cycleLength": 30,
+  "generatedAt": "2026-03-09T17:21:19Z",
+  "source": "schedule",
+  "generated_at": "2026-03-09T17:21:19Z",
+  "today": "2026-03-09",
+  "last_period_start": "2026-02-28",
+  "previous_period_start": null,
+  "history": [
+    "2026-02-28"
+  ],
+  "cycle_day": 10,
+  "phase": "Follicular",
+  "phase_short": "Fol",
+  "phase_emoji": "🌿",
+  "last_cycle_length_days": null,
+  "avg_cycle_length_days": 30,
+  "predicted_next_start": "2026-03-30",
+  "predicted_ovulation_day": "2026-03-16",
+  "note": "Predictions are approximate (±2–3 days).",
+  "token": "a738764f193ff7caaaa562f32af77a69e19878a1",
+  "label": "di_artappetit"
+}
