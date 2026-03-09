@@ -1,24 +1,24 @@
 {
-  "cycleStart": "2026-02-28",
-  "cycleLength": 25,
+  "cycleStart": "2026-02-23",
+  "cycleLength": 38,
   "generatedAt": "2026-03-09T08:54:41Z",
   "source": "schedule",
   "generated_at": "2026-03-09T08:54:41Z",
   "today": "2026-03-09",
-  "last_period_start": "2026-02-28",
+  "last_period_start": "2026-02-23",
   "previous_period_start": null,
   "history": [
-    "2026-02-28"
+    "2026-02-23"
   ],
-  "cycle_day": 10,
+  "cycle_day": 15,
   "phase": "Follicular",
   "phase_short": "Fol",
   "phase_emoji": "🌿",
   "last_cycle_length_days": null,
-  "avg_cycle_length_days": 25,
-  "predicted_next_start": "2026-03-25",
-  "predicted_ovulation_day": "2026-03-11",
+  "avg_cycle_length_days": 38,
+  "predicted_next_start": "2026-04-02",
+  "predicted_ovulation_day": "2026-03-19",
   "note": "Predictions are approximate (±2–3 days).",
-  "token": "a986c5898667abdcbe28c854389c9c152efdd291",
-  "label": "lerybinskaya"
+  "token": "28db19e350e1077fe44bebf834a38cabe9794e8b",
+  "label": "bav.artist"
 }
