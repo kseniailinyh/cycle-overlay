@@ -1,0 +1,24 @@
+{
+  "cycleStart": "2026-02-14",
+  "cycleLength": 28,
+  "generatedAt": "2026-03-10T10:03:52Z",
+  "source": "schedule",
+  "generated_at": "2026-03-10T10:03:52Z",
+  "today": "2026-03-10",
+  "last_period_start": "2026-02-14",
+  "previous_period_start": null,
+  "history": [
+    "2026-02-14"
+  ],
+  "cycle_day": 25,
+  "phase": "Luteal",
+  "phase_short": "Lut",
+  "phase_emoji": "🌙",
+  "last_cycle_length_days": null,
+  "avg_cycle_length_days": 28,
+  "predicted_next_start": "2026-03-14",
+  "predicted_ovulation_day": "2026-02-28",
+  "note": "Predictions are approximate (±2–3 days).",
+  "token": "3aaceb4127dd54d97ecd17c0f20a164a1de5ca1e",
+  "label": "sannanto"
+}
