@@ -370,22 +370,25 @@
         if (!tokenParam) {
           throw new Error("Missing token. Add ?t=<token> to the dashboard URL.");
         }
+
         const requestUrl = new URL(`${apiBase}/start`);
-        // Keep both old and new parameter names for worker compatibility.
         requestUrl.searchParams.set("date", dateIso);
         requestUrl.searchParams.set("cycle_start", dateIso);
         requestUrl.searchParams.set("t", tokenParam);
         requestUrl.searchParams.set("token", tokenParam);
+
         const response = await fetch(requestUrl.toString(), {
-          method: "POST",
           headers: {
             Accept: "application/json",
           },
+          cache: "no-store",
         });
+
         if (!response.ok) {
           const text = await response.text();
           throw new Error(`Start request failed (${response.status}): ${text}`);
         }
+
         return response.json();
       }
 
