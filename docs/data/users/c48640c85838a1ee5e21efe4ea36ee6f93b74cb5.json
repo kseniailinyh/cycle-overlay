@@ -1,16 +1,16 @@
 {
   "cycleStart": "2026-03-10",
   "cycleLength": 30,
-  "generatedAt": "2026-03-19T09:54:31Z",
+  "generatedAt": "2026-03-20T16:07:20Z",
   "source": "workflow_dispatch",
-  "generated_at": "2026-03-19T09:54:31Z",
-  "today": "2026-03-19",
+  "generated_at": "2026-03-20T16:07:20Z",
+  "today": "2026-03-20",
   "last_period_start": "2026-03-10",
   "previous_period_start": null,
   "history": [
     "2026-03-10"
   ],
-  "cycle_day": 10,
+  "cycle_day": 11,
   "phase": "Follicular",
   "phase_short": "Fol",
   "phase_emoji": "🌿",
