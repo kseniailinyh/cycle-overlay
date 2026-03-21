@@ -1,17 +1,17 @@
 {
   "cycleStart": "2026-03-19",
   "cycleLength": 28,
-  "generatedAt": "2026-03-20T16:07:20Z",
+  "generatedAt": "2026-03-21T14:27:51Z",
   "source": "workflow_dispatch",
-  "generated_at": "2026-03-20T16:07:20Z",
-  "today": "2026-03-20",
+  "generated_at": "2026-03-21T14:27:51Z",
+  "today": "2026-03-21",
   "last_period_start": "2026-03-19",
   "previous_period_start": "2026-02-18",
   "history": [
     "2026-02-18",
     "2026-03-19"
   ],
-  "cycle_day": 2,
+  "cycle_day": 3,
   "phase": "Menstruation",
   "phase_short": "Men",
   "phase_emoji": "🩸",
