@@ -344,6 +344,24 @@
         });
       }
 
+      function getStartCycleErrorMessage(error) {
+        if (!error) {
+          return "Update failed";
+        }
+
+        const message = typeof error.message === "string" ? error.message : String(error);
+        if (/Timed out while waiting for calendar publish/i.test(message)) {
+          return "Update started, but publish took too long";
+        }
+        if (/Start request failed/i.test(message)) {
+          return message;
+        }
+        if (error instanceof TypeError) {
+          return "Network error reaching update service";
+        }
+        return message || "Update failed";
+      }
+
       async function waitForPublishedStart(targetStartIso) {
         const targetDate = parseLocalISODate(targetStartIso);
         if (!targetDate) {
@@ -440,7 +458,7 @@
         } catch (error) {
           clearPendingState();
           await loadAndRender(true).catch(() => {});
-          setStatus("complete", "Update failed");
+          setStatus("complete", getStartCycleErrorMessage(error));
           console.error(error);
         } finally {
           startCycleButtonEl.disabled = false;
