@@ -1,9 +1,9 @@
 {
   "cycleStart": "2026-03-17",
   "cycleLength": 28,
-  "generatedAt": "2026-03-22T17:34:54Z",
-  "source": "workflow_dispatch",
-  "generated_at": "2026-03-22T17:34:54Z",
+  "generatedAt": "2026-03-22T17:36:11Z",
+  "source": "schedule",
+  "generated_at": "2026-03-22T17:36:11Z",
   "today": "2026-03-22",
   "last_period_start": "2026-03-17",
   "previous_period_start": "2026-02-17",
