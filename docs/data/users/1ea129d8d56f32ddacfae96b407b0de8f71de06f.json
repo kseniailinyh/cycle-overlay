@@ -1,0 +1,24 @@
+{
+  "cycleStart": "2026-03-16",
+  "cycleLength": 29,
+  "generatedAt": "2026-03-22T12:30:46Z",
+  "source": "manual",
+  "generated_at": "2026-03-22T12:30:46Z",
+  "today": "2026-03-22",
+  "last_period_start": "2026-03-16",
+  "previous_period_start": null,
+  "history": [
+    "2026-03-16"
+  ],
+  "cycle_day": 7,
+  "phase": "Follicular",
+  "phase_short": "Fol",
+  "phase_emoji": "🌿",
+  "last_cycle_length_days": null,
+  "avg_cycle_length_days": 29,
+  "predicted_next_start": "2026-04-14",
+  "predicted_ovulation_day": "2026-03-31",
+  "note": "Predictions are approximate (±2–3 days).",
+  "token": "1ea129d8d56f32ddacfae96b407b0de8f71de06f",
+  "label": "yukrasilnikova"
+}
